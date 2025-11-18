@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-users-list',
-  templateUrl: './users-list.component.html'
+    selector: 'app-users-list',
+    templateUrl: './users-list.component.html',
+    standalone: false
 })
 export class UsersListComponent implements OnInit {
   users: any[] = [];

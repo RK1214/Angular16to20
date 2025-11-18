@@ -4,8 +4,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
-  selector: 'app-user-form',
-  templateUrl: './user-form.component.html'
+    selector: 'app-user-form',
+    templateUrl: './user-form.component.html',
+    standalone: false
 })
 export class UserFormComponent implements OnInit {
   form!: FormGroup;
