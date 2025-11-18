@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { MockBackendService } from './core/mock-backend.service';
@@ -30,6 +30,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 @NgModule({ declarations: [AppComponent, HomeComponent, UsersListComponent, UserFormComponent],
     bootstrap: [AppComponent], imports: [BrowserModule,
         BrowserAnimationsModule,
+        HttpClientModule,
         InMemoryWebApiModule.forRoot(MockBackendService, { delay: 400 }),
         RouterModule.forRoot(APP_ROUTES),
         MatToolbarModule,
@@ -44,5 +45,5 @@ import { ReactiveFormsModule } from '@angular/forms';
         MatSnackBarModule,
         MatTooltipModule,
         MatSelectModule,
-        ReactiveFormsModule], providers: [provideHttpClient(withInterceptorsFromDi())] })
+        ReactiveFormsModule] })
 export class AppModule {}
