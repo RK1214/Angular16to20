@@ -22,8 +22,6 @@ import { MatLegacySnackBarModule as MatSnackBarModule } from '@angular/material/
 import { MatLegacyTooltipModule as MatTooltipModule } from '@angular/material/legacy-tooltip';
 import { MatLegacySelectModule as MatSelectModule } from '@angular/material/legacy-select';
 
-import { FlexLayoutModule } from '@angular/flex-layout';
-
 import { HomeComponent } from './features/home/home.component';
 import { UsersListComponent } from './features/users/users-list.component';
 import { UserFormComponent } from './features/users/user-form.component';
@@ -49,7 +47,6 @@ import { ReactiveFormsModule } from '@angular/forms';
     MatSnackBarModule,
     MatTooltipModule,
     MatSelectModule,
-    FlexLayoutModule,
     ReactiveFormsModule
   ],
   bootstrap: [AppComponent]

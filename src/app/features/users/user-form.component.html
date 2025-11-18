@@ -1,37 +1,37 @@
 <mat-card>
   <mat-card-title>
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+    <div class="flex-row align-start-center gap-12">
       <div>{{ id ? 'Edit user' : 'Create user' }}</div>
-      <div fxShow.gt-xs fxFlex></div>
-      <div fxShow.xs>
+      <div class="flex-1 hide-xs show-gt-xs"></div>
+      <div class="show-xs hide-gt-xs">
         <button mat-icon-button (click)="router.navigate(['/users'])" matTooltip="Back"><mat-icon>arrow_back</mat-icon></button>
       </div>
     </div>
   </mat-card-title>
 
   <mat-card-content>
-    <form [formGroup]="form" (ngSubmit)="save()" fxLayout="row" fxLayout.xs="column" fxLayoutGap="16px">
-      <div fxFlex="1 1 60%">
-        <mat-form-field fxFlex>
+    <form [formGroup]="form" (ngSubmit)="save()" class="flex-row flex-column-xs gap-16">
+      <div class="flex-60">
+        <mat-form-field class="w-full">
           <mat-label>Name</mat-label>
           <input matInput formControlName="name" />
           <mat-error *ngIf="form.get('name')?.invalid">Name required</mat-error>
         </mat-form-field>
 
-        <mat-form-field fxFlex>
+        <mat-form-field class="w-full">
           <mat-label>Email</mat-label>
           <input matInput formControlName="email" />
           <mat-error *ngIf="form.get('email')?.invalid">Valid email required</mat-error>
         </mat-form-field>
       </div>
 
-      <div fxFlex="0 0 220px" fxLayout="column" fxLayoutGap="12px">
+      <div class="flex-220px flex-column gap-12">
         <mat-form-field>
           <mat-label>Role</mat-label>
           <input matInput formControlName="role" />
         </mat-form-field>
 
-        <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
+        <div class="flex-row gap-8 align-center-center">
           <button mat-raised-button type="submit">Save</button>
           <button mat-button type="button" (click)="router.navigate(['/users'])">Cancel</button>
         </div>

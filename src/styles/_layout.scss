@@ -1,0 +1,218 @@
+// ============================================
+// Modern CSS Layout Utilities
+// Replacement for Angular Flex Layout
+// ============================================
+
+// Flexbox Layout Utilities
+// ============================================
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-row-reverse {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.flex-column-reverse {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+// Flexbox Alignment
+// ============================================
+
+.align-start-start {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.align-start-center {
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.align-start-end {
+  align-items: flex-end;
+  justify-content: flex-start;
+}
+
+.align-center-start {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.align-center-center {
+  align-items: center;
+  justify-content: center;
+}
+
+.align-center-end {
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.align-space-between-start {
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.align-space-between-center {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.align-space-between-end {
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+// Gap Utilities (Spacing)
+// ============================================
+
+.gap-4 { gap: 4px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.gap-20 { gap: 20px; }
+.gap-24 { gap: 24px; }
+.gap-32 { gap: 32px; }
+
+// Flex Sizing
+// ============================================
+
+.flex-auto {
+  flex: 1 1 auto;
+}
+
+.flex-none {
+  flex: 0 0 auto;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-grow {
+  flex-grow: 1;
+}
+
+.flex-shrink {
+  flex-shrink: 1;
+}
+
+// Specific flex basis
+.flex-60 {
+  flex: 1 1 60%;
+}
+
+.flex-40 {
+  flex: 1 1 40%;
+}
+
+.flex-300px {
+  flex: 0 0 300px;
+}
+
+.flex-220px {
+  flex: 0 0 220px;
+}
+
+// Responsive Utilities (Mobile-first approach)
+// ============================================
+
+// XS Breakpoint (< 600px) - Mobile
+@media (max-width: 599px) {
+  .flex-column-xs {
+    flex-direction: column !important;
+  }
+
+  .hide-xs {
+    display: none !important;
+  }
+
+  .show-xs {
+    display: flex !important;
+  }
+}
+
+// GT-XS Breakpoint (>= 600px) - Tablet and up
+@media (min-width: 600px) {
+  .hide-gt-xs {
+    display: none !important;
+  }
+
+  .show-gt-xs {
+    display: flex !important;
+  }
+}
+
+// SM Breakpoint (>= 600px and < 960px) - Tablet
+@media (min-width: 600px) and (max-width: 959px) {
+  .hide-sm {
+    display: none !important;
+  }
+
+  .show-sm {
+    display: flex !important;
+  }
+}
+
+// GT-SM Breakpoint (>= 960px) - Desktop
+@media (min-width: 960px) {
+  .hide-gt-sm {
+    display: none !important;
+  }
+
+  .show-gt-sm {
+    display: flex !important;
+  }
+}
+
+// MD Breakpoint (>= 960px and < 1280px) - Small Desktop
+@media (min-width: 960px) and (max-width: 1279px) {
+  .hide-md {
+    display: none !important;
+  }
+
+  .show-md {
+    display: flex !important;
+  }
+}
+
+// GT-MD Breakpoint (>= 1280px) - Large Desktop
+@media (min-width: 1280px) {
+  .hide-gt-md {
+    display: none !important;
+  }
+
+  .show-gt-md {
+    display: flex !important;
+  }
+}
+
+// Additional Utility Classes
+// ============================================
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-auto {
+  overflow: auto;
+}

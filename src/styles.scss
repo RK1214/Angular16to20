@@ -1,5 +1,8 @@
 @use '@angular/material' as mat;
 
+// Import layout utilities (replacement for Flex Layout)
+@import './styles/layout';
+
 @include mat.core();
 
 $primary: mat.define-palette(mat.$indigo-palette);
