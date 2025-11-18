@@ -64,3 +64,4 @@ package-lock.json.backup
 *.temp
 *.v16-backup
 *.v17-backup
+*.v18-backup
