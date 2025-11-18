@@ -436,6 +436,7 @@ This is a reference application for migration purposes. If you find issues in th
 - [MIGRATION_PLAN.md](./MIGRATION_PLAN.md) - Complete migration guide
 - [MIGRATION_QUICK_REFERENCE.md](./MIGRATION_QUICK_REFERENCE.md) - Quick lookup
 - [MIGRATION_CHECKLIST.md](./MIGRATION_CHECKLIST.md) - Progress tracker
+- [DYNAMIC_FLEX_MIGRATION.md](./DYNAMIC_FLEX_MIGRATION.md) - Dynamic flex bindings guide
 
 ### Community
 - [Angular Blog](https://blog.angular.io/)

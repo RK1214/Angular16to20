@@ -41,6 +41,36 @@ fxShow.gt-sm                      → class="show-gt-sm"
 fxHide.xs                         → class="hide-xs"
 ```
 
+### Dynamic Bindings (Property Bindings)
+
+For **dynamic values** from component properties, use custom directives:
+
+```html
+<!-- Dynamic Flex (variable values) -->
+[fxFlex]="itemWidth"              → [appFlex]="itemWidth"
+[fxFlex]="columnSize"             → [appFlex]="columnSize"
+
+<!-- Dynamic Gap (variable values) -->
+[fxLayoutGap]="spacing"           → [appGap]="spacing"
+[fxLayoutGap]="gapSize"           → [appGap]="gapSize"
+```
+
+**Component Example:**
+```typescript
+export class MyComponent {
+  itemWidth = '50';      // Becomes 50%
+  columnSize = '300px';  // Becomes 300px fixed
+  spacing = '16';        // Becomes 16px gap
+}
+```
+
+**Directives automatically handle:**
+- Numbers: `50` → `0 0 50%`
+- Pixels: `200px` → `0 0 200px`
+- Keywords: `auto` → `1 1 auto`
+
+📖 See [DYNAMIC_FLEX_MIGRATION.md](./DYNAMIC_FLEX_MIGRATION.md) for detailed guide
+
 ### Breakpoints
 
 | Name | Min Width | Flex Layout | CSS Class |

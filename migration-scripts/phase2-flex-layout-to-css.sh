@@ -216,6 +216,17 @@ for file in $HTML_FILES; do
 
         # Apply replacements using sed (macOS and Linux compatible)
 
+        # ==========================================
+        # DYNAMIC BINDINGS - Process FIRST
+        # ==========================================
+
+        # [fxLayoutGap]="variable" -> [appGap]="variable"
+        sed -i.tmp 's/\[fxLayoutGap\]="\([^"]*\)"/[appGap]="\1"/g' "$file"
+
+        # ==========================================
+        # STATIC BINDINGS
+        # ==========================================
+
         # fxLayout directives
         sed -i.tmp 's/fxLayout="row wrap"/class="flex-row flex-wrap"/g' "$file"
         sed -i.tmp 's/fxLayout="row"/class="flex-row"/g' "$file"
@@ -247,7 +258,18 @@ for file in $HTML_FILES; do
         sed -i.tmp 's/fxLayoutGap="20px"/class="gap-20"/g' "$file"
         sed -i.tmp 's/fxLayoutGap="24px"/class="gap-24"/g' "$file"
 
-        # fxFlex
+        # fxFlex - Dynamic bindings (must come BEFORE static replacements)
+        # [fxFlex]="variable" -> [appFlex]="variable" (using custom directive)
+        sed -i.tmp 's/\[fxFlex\]="\([^"]*\)"/[appFlex]="\1"/g' "$file"
+
+        # For responsive dynamic bindings - these need manual review
+        # [fxFlex.xs]="variable" - Add comment for manual review
+        sed -i.tmp 's/\[fxFlex\.xs\]="\([^"]*\)"/[appFlex]="\1" <!--TODO: Review responsive fxFlex.xs-->/g' "$file"
+        sed -i.tmp 's/\[fxFlex\.sm\]="\([^"]*\)"/[appFlex]="\1" <!--TODO: Review responsive fxFlex.sm-->/g' "$file"
+        sed -i.tmp 's/\[fxFlex\.md\]="\([^"]*\)"/[appFlex]="\1" <!--TODO: Review responsive fxFlex.md-->/g' "$file"
+        sed -i.tmp 's/\[fxFlex\.lg\]="\([^"]*\)"/[appFlex]="\1" <!--TODO: Review responsive fxFlex.lg-->/g' "$file"
+
+        # fxFlex - Static values
         sed -i.tmp 's/fxFlex="auto"/class="flex-auto"/g' "$file"
         sed -i.tmp 's/fxFlex="none"/class="flex-none"/g' "$file"
         sed -i.tmp 's/fxFlex="10"/class="flex-10"/g' "$file"
@@ -296,7 +318,202 @@ done
 
 print_success "Modified $MODIFIED_COUNT HTML files"
 
-# Step 5: Remove FlexLayoutModule from app.module.ts and other module files
+# Step 5: Create shared utilities and directives for dynamic flex bindings
+print_info "Creating flex utilities and directives..."
+
+# Create shared directory structure
+mkdir -p src/app/shared/utils
+mkdir -p src/app/shared/directives
+
+# Create flex.utils.ts
+cat > src/app/shared/utils/flex.utils.ts << 'UTILS_EOF'
+/**
+ * Utility functions for converting Angular Flex Layout dynamic values to CSS
+ */
+
+/**
+ * Converts fxFlex value to CSS flex property value
+ * @param value - The flex value (e.g., '50', '200px', 'auto', '1 1 auto')
+ * @returns CSS flex property value
+ */
+export function convertFlexValue(value: string | number): string {
+  if (!value) return '1 1 auto';
+
+  const strValue = String(value);
+
+  // Already a valid flex shorthand (e.g., "1 1 auto")
+  if (strValue.includes(' ')) {
+    return strValue;
+  }
+
+  // Percentage values (e.g., "50" -> "0 0 50%")
+  if (/^\d+$/.test(strValue)) {
+    return `0 0 ${strValue}%`;
+  }
+
+  // Pixel values (e.g., "200px" -> "0 0 200px")
+  if (strValue.endsWith('px') || strValue.endsWith('em') || strValue.endsWith('rem')) {
+    return `0 0 ${strValue}`;
+  }
+
+  // Special keywords
+  if (strValue === 'auto') return '1 1 auto';
+  if (strValue === 'none') return '0 0 auto';
+  if (strValue === 'grow') return '1 1 100%';
+  if (strValue === 'initial') return '0 1 auto';
+  if (strValue === 'nogrow') return '0 1 auto';
+  if (strValue === 'noshrink') return '1 0 auto';
+
+  // Default to flex: 1 1 auto
+  return '1 1 auto';
+}
+
+/**
+ * Converts fxLayoutGap value to CSS gap property value
+ * @param value - The gap value (e.g., '16', '16px')
+ * @returns CSS gap property value
+ */
+export function convertGapValue(value: string | number): string {
+  if (!value) return '0px';
+
+  const strValue = String(value);
+
+  // Already has unit
+  if (/^\d+\s*(px|em|rem|%)$/.test(strValue)) {
+    return strValue;
+  }
+
+  // Just a number, add px
+  if (/^\d+$/.test(strValue)) {
+    return `${strValue}px`;
+  }
+
+  return strValue;
+}
+UTILS_EOF
+
+# Create flex.directive.ts
+cat > src/app/shared/directives/flex.directive.ts << 'DIR_EOF'
+import { Directive, ElementRef, Input, OnInit, OnChanges, Renderer2, SimpleChanges } from '@angular/core';
+import { convertFlexValue, convertGapValue } from '../utils/flex.utils';
+
+/**
+ * Drop-in replacement directive for fxFlex
+ * Converts flex layout values to CSS flex property
+ *
+ * Usage:
+ * <div [appFlex]="'50'">50% width</div>
+ * <div [appFlex]="itemWidth">Dynamic width</div>
+ * <div [appFlex]="'200px'">200px width</div>
+ */
+@Directive({
+  selector: '[appFlex]',
+  standalone: true
+})
+export class FlexDirective implements OnInit, OnChanges {
+  @Input() appFlex: string | number = '1 1 auto';
+
+  constructor(
+    private el: ElementRef,
+    private renderer: Renderer2
+  ) {}
+
+  ngOnInit(): void {
+    this.updateFlex();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['appFlex']) {
+      this.updateFlex();
+    }
+  }
+
+  private updateFlex(): void {
+    const flexValue = convertFlexValue(this.appFlex);
+    this.renderer.setStyle(this.el.nativeElement, 'flex', flexValue);
+  }
+}
+
+/**
+ * Drop-in replacement directive for fxLayoutGap
+ * Converts gap values to CSS gap property
+ *
+ * Usage:
+ * <div [appGap]="'16'">16px gap</div>
+ * <div [appGap]="gapSize">Dynamic gap</div>
+ */
+@Directive({
+  selector: '[appGap]',
+  standalone: true
+})
+export class GapDirective implements OnInit, OnChanges {
+  @Input() appGap: string | number = '0';
+
+  constructor(
+    private el: ElementRef,
+    private renderer: Renderer2
+  ) {}
+
+  ngOnInit(): void {
+    this.updateGap();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['appGap']) {
+      this.updateGap();
+    }
+  }
+
+  private updateGap(): void {
+    const gapValue = convertGapValue(this.appGap);
+    this.renderer.setStyle(this.el.nativeElement, 'gap', gapValue);
+  }
+}
+DIR_EOF
+
+print_success "Created flex utilities and directives"
+
+# Step 6: Import directives into modules that use dynamic flex bindings
+print_info "Importing FlexDirective and GapDirective into components..."
+
+# Find components that use appFlex or appGap
+COMPONENTS_USING_DIRECTIVES=$(grep -l "appFlex\|appGap" $(find src -name "*.html" -type f) 2>/dev/null | sed 's/\.html$/\.ts/g')
+
+if [ -n "$COMPONENTS_USING_DIRECTIVES" ]; then
+    for comp_file in $COMPONENTS_USING_DIRECTIVES; do
+        if [ -f "$comp_file" ]; then
+            # Check if it's a standalone component or needs module import
+            if grep -q "standalone: true" "$comp_file"; then
+                # Standalone component - add to imports array
+                if ! grep -q "FlexDirective\|GapDirective" "$comp_file"; then
+                    cp "$comp_file" "$comp_file.backup"
+
+                    # Add import statement
+                    if ! grep -q "from.*shared/directives/flex.directive" "$comp_file"; then
+                        # Add import after other Angular imports
+                        sed -i.tmp "/^import.*@angular/a\\
+import { FlexDirective, GapDirective } from '../../shared/directives/flex.directive';
+" "$comp_file"
+                    fi
+
+                    # Add to imports array in @Component decorator
+                    sed -i.tmp "/imports: \[/a\\
+    FlexDirective,\\
+    GapDirective," "$comp_file"
+
+                    rm -f "$comp_file.tmp"
+                    print_success "Added directives to standalone component: $comp_file"
+                fi
+            fi
+        fi
+    done
+
+    print_success "Imported directives into components using dynamic flex"
+else
+    print_info "No components found using dynamic flex bindings (appFlex/appGap)"
+fi
+
+# Step 7: Remove FlexLayoutModule from app.module.ts and other module files
 print_info "Removing FlexLayoutModule from TypeScript files..."
 
 TS_MODULE_FILES=$(find src -name "*.module.ts" -type f)
@@ -316,17 +533,17 @@ for file in $TS_MODULE_FILES; do
     fi
 done
 
-# Step 6: Uninstall @angular/flex-layout
+# Step 8: Uninstall @angular/flex-layout
 print_info "Uninstalling @angular/flex-layout package..."
 npm uninstall @angular/flex-layout
 print_success "Uninstalled @angular/flex-layout"
 
-# Step 7: Reinstall dependencies
+# Step 9: Reinstall dependencies
 print_info "Reinstalling dependencies..."
 npm install
 print_success "Dependencies reinstalled"
 
-# Step 8: Test build
+# Step 10: Test build
 print_info "Testing build..."
 if npm run build; then
     print_success "Build successful!"
@@ -336,13 +553,16 @@ else
     exit 1
 fi
 
-# Step 9: Commit changes
+# Step 11: Commit changes
 print_info "Committing Phase 2 changes..."
 git add -A
 git commit -m "Phase 2: Migrated Angular Flex Layout to CSS
 
 - Created src/styles/_layout.scss with CSS utilities
-- Replaced all Flex Layout directives with CSS classes
+- Created FlexDirective and GapDirective for dynamic bindings
+- Replaced all Flex Layout directives:
+  - Static: fxFlex, fxLayout, etc. → CSS classes
+  - Dynamic: [fxFlex], [fxLayoutGap] → appFlex, appGap directives
 - Removed FlexLayoutModule from all modules
 - Uninstalled @angular/flex-layout package
 - Build successful
@@ -363,7 +583,9 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Phase 2 Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-print_success "Flex Layout directives replaced with CSS"
+print_success "Flex Layout directives replaced with CSS classes"
+print_success "Dynamic flex bindings converted to appFlex/appGap directives"
+print_success "FlexDirective and GapDirective created for dynamic values"
 print_success "FlexLayoutModule removed"
 print_success "@angular/flex-layout uninstalled"
 print_success "Build tested successfully"
