@@ -395,6 +395,7 @@ sh /full/path/to/migration-scripts/phase1-preparation.sh
 
 **That's all you need!** The scripts will guide you through everything else.
 
+
 ---
 
 *Last Updated: 2025-11-18*
