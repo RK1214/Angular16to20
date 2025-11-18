@@ -56,14 +56,14 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "ng16-material-legacy-sample:build"
+            "buildTarget": "ng16-material-legacy-sample:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "ng16-material-legacy-sample:build:production"
+              "buildTarget": "ng16-material-legacy-sample:build:production"
             },
             "development": {
-              "browserTarget": "ng16-material-legacy-sample:build:development"
+              "buildTarget": "ng16-material-legacy-sample:build:development"
             }
           },
           "defaultConfiguration": "development"
