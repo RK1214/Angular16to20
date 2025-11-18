@@ -1,0 +1,20 @@
+<mat-toolbar class="mat-toolbar" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+  <div fxLayout="row" fxLayoutAlign="start center" fxFlex="auto">
+    <span>NG16 Material Legacy Sample</span>
+  </div>
+
+  <!-- hide text on xs, show small icon instead -->
+  <div fxFlex="none" fxShow.gt-xs>
+    <button mat-button routerLink="/">Home</button>
+    <button mat-button routerLink="/users">Users</button>
+  </div>
+
+  <div fxFlex="none" fxShow.xs>
+    <button mat-button routerLink="/" matTooltip="Home"><mat-icon>home</mat-icon></button>
+    <button mat-button routerLink="/users" matTooltip="Users"><mat-icon>people</mat-icon></button>
+  </div>
+</mat-toolbar>
+
+<div fxLayout="column" fxLayoutGap="16px" style="padding: 16px;">
+  <router-outlet></router-outlet>
+</div>

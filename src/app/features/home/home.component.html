@@ -1,0 +1,19 @@
+<div fxLayout="row" fxLayout.xs="column" fxLayoutGap="16px">
+  <mat-card fxFlex>
+    <mat-card-title>Welcome</mat-card-title>
+    <mat-card-content>
+      This sample demonstrates Angular 16 with Material legacy components and Flex Layout. The layout
+      below shows responsive breakpoints and uses <code>fxShow.xs</code> and related directives.
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card fxFlex="300px" fxShow.gt-sm>
+    <mat-card-title>Quick Links</mat-card-title>
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item routerLink="/users">Manage Users</mat-list-item>
+        <mat-list-item routerLink="/">Dashboard</mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+</div>
