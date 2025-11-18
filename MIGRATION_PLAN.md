@@ -1180,6 +1180,64 @@ Material 19+ requires explicit inclusion of elevation and background mixins.
 
 ---
 
+### Issue 9: InMemoryWebApi Not Working with provideHttpClient() in Angular 20
+
+**Problem:**
+After migration to Angular 20, the `/api/users` endpoint from `angular-in-memory-web-api` stops responding. Users list component shows empty data.
+
+**Cause:**
+The Angular 18 migration automatically converted `HttpClientModule` to `provideHttpClient(withInterceptorsFromDi())`. While this is the modern approach, `angular-in-memory-web-api` v0.20.0 has better compatibility with the traditional `HttpClientModule` approach for intercepting HTTP requests.
+
+**Symptoms:**
+- Application builds and runs without errors
+- No console errors
+- HTTP requests to `/api/users` return no data
+- Mock backend service is configured but not intercepting requests
+
+**Solution:**
+Revert to using `HttpClientModule` instead of `provideHttpClient()`:
+
+**Before (Broken):**
+```typescript
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+
+@NgModule({
+  imports: [
+    BrowserModule,
+    InMemoryWebApiModule.forRoot(MockBackendService, { delay: 400 }),
+    // ...
+  ],
+  providers: [
+    provideHttpClient(withInterceptorsFromDi())
+  ]
+})
+```
+
+**After (Working):**
+```typescript
+import { HttpClientModule } from '@angular/common/http';
+
+@NgModule({
+  imports: [
+    BrowserModule,
+    HttpClientModule,  // Add this BEFORE InMemoryWebApiModule
+    InMemoryWebApiModule.forRoot(MockBackendService, { delay: 400 }),
+    // ...
+  ]
+  // No providers array needed
+})
+```
+
+**Important:**
+- `HttpClientModule` must be imported **before** `InMemoryWebApiModule.forRoot()`
+- Remove the `provideHttpClient()` from providers array
+- This is a known compatibility issue with angular-in-memory-web-api
+
+**Alternative (Future):**
+When angular-in-memory-web-api adds full support for the provider-based HTTP client, you can migrate back to `provideHttpClient()`. Check the package changelog for updates.
+
+---
+
 ### Best Practices from Actual Migration
 
 1. **Always commit before running ng update**
@@ -1209,6 +1267,16 @@ Material 19+ requires explicit inclusion of elevation and background mixins.
 7. **Ignore non-blocking warnings**
    - Sass @import deprecation is non-blocking
    - Focus on errors first, warnings later
+
+8. **Test runtime functionality, not just builds**
+   - Application may build successfully but have runtime issues
+   - Test all API endpoints and user interactions
+   - Example: InMemoryWebApi issue only appeared at runtime
+
+9. **Keep HttpClientModule for InMemoryWebApi**
+   - If using angular-in-memory-web-api, keep HttpClientModule
+   - Don't use provideHttpClient() with mock backend services
+   - Test API endpoints after Angular 18+ migration
 
 ---
 
