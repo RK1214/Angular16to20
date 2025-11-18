@@ -62,3 +62,4 @@ package-lock.json.backup
 # Temporary files
 *.tmp
 *.temp
+*.v16-backup
