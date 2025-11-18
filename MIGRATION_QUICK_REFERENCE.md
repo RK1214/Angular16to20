@@ -112,16 +112,31 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 </mat-card>
 ```
 
-#### Form Fields (Add appearance)
+#### Form Fields (Configure global appearance)
+```typescript
+// RECOMMENDED: Configure globally in app.module.ts
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+
+@NgModule({
+  providers: [
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline' }
+    }
+  ]
+})
+export class AppModule {}
+```
+
 ```html
-<!-- BEFORE -->
+<!-- Templates stay clean - no appearance attribute needed -->
 <mat-form-field>
   <mat-label>Label</mat-label>
   <input matInput />
 </mat-form-field>
 
-<!-- AFTER (recommended to add appearance) -->
-<mat-form-field appearance="outline">
+<!-- Can still override per field if needed -->
+<mat-form-field appearance="fill">
   <mat-label>Label</mat-label>
   <input matInput />
 </mat-form-field>
@@ -129,7 +144,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 **MDC Appearances:**
 - `fill` - Filled style (default)
-- `outline` - Outlined style
+- `outline` - Outlined style (recommended)
 
 #### Lists (Structure changes)
 ```html

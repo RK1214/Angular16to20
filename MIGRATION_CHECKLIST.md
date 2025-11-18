@@ -124,7 +124,8 @@ git commit -m "Phase 2: Flex Layout migration complete - replaced with CSS"
   - [ ] Update list structure if needed
 
 - [ ] Update `src/app/features/users/user-form.component.html`
-  - [ ] Add `appearance="outline"` to form fields
+  - [ ] Configure global `MAT_FORM_FIELD_DEFAULT_OPTIONS` in module (handled by script)
+  - [ ] Remove redundant `appearance` attributes from templates (handled by script)
   - [ ] Verify form field labels
   - [ ] Verify input fields
   - [ ] Verify buttons work

@@ -9,7 +9,8 @@
 # - Updates component TypeScript files
 # - Updates SCSS files (legacy CSS classes)
 # - Removes legacy theme from styles.scss
-# - Adds appearance attributes to form fields
+# - Configures global MAT_FORM_FIELD_DEFAULT_OPTIONS in modules
+# - Removes redundant appearance attributes from templates
 # - Tests the build
 ################################################################################
 
@@ -178,32 +179,86 @@ else
     print_warning "src/styles.scss not found"
 fi
 
-# Step 4: Add appearance="outline" to mat-form-field in HTML files
-print_info "Adding appearance='outline' to mat-form-field elements..."
+# Step 4: Configure global form field appearance in modules
+print_info "Configuring global MAT_FORM_FIELD_DEFAULT_OPTIONS..."
 
-HTML_FILES=$(find src -name "*.html" -type f)
-MODIFIED_HTML=0
+MODULE_FILES=$(find src -name "*.module.ts" -type f)
+MODIFIED_MODULES=0
 
-for file in $HTML_FILES; do
-    if grep -q "<mat-form-field" "$file"; then
-        # Check if any mat-form-field is missing appearance
-        if grep -q '<mat-form-field[^>]*>' "$file" && ! grep -q '<mat-form-field[^>]*appearance=' "$file"; then
-            cp "$file" "$file.backup"
+for file in $MODULE_FILES; do
+    # Only process modules that import MatFormFieldModule
+    if grep -q "MatFormFieldModule" "$file"; then
+        cp "$file" "$file.backup"
+        UPDATED=false
 
-            # Add appearance="outline" to mat-form-field tags that don't have it
-            sed -i.tmp 's/<mat-form-field\([^>]*\)>/<mat-form-field appearance="outline"\1>/g' "$file"
+        # Add import for MAT_FORM_FIELD_DEFAULT_OPTIONS if not present
+        if ! grep -q "MAT_FORM_FIELD_DEFAULT_OPTIONS" "$file"; then
+            # Find the MatFormFieldModule import line and add our import after it
+            if grep -q "from '@angular/material/form-field'" "$file"; then
+                sed -i.tmp "/from '@angular\/material\/form-field'/a\\
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
+" "$file"
+                UPDATED=true
+            fi
+        fi
 
-            # Clean up if appearance was already there (avoid duplicates)
-            sed -i.tmp 's/appearance="outline" appearance="[^"]*"/appearance="outline"/g' "$file"
+        # Add provider if not present
+        if ! grep -q "MAT_FORM_FIELD_DEFAULT_OPTIONS" "$file" || ! grep -q "provide: MAT_FORM_FIELD_DEFAULT_OPTIONS" "$file"; then
+            # Check if providers array exists
+            if grep -q "providers:" "$file"; then
+                # Add to existing providers array
+                sed -i.tmp "/providers: \[/a\\
+    {\\
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,\\
+      useValue: { appearance: 'outline' }\\
+    }," "$file"
+                UPDATED=true
+            else
+                # Add new providers array before the closing brace of @NgModule
+                sed -i.tmp "/imports: \[/,/\]/a\\
+  ],\\
+  providers: [\\
+    {\\
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,\\
+      useValue: { appearance: 'outline' }\\
+    }\\
+  " "$file"
+                UPDATED=true
+            fi
+        fi
 
+        if [ "$UPDATED" = true ]; then
             rm -f "$file.tmp"
-            MODIFIED_HTML=$((MODIFIED_HTML + 1))
-            print_success "Added appearance to: $file"
+            MODIFIED_MODULES=$((MODIFIED_MODULES + 1))
+            print_success "Configured global form field appearance in: $file"
+        else
+            rm "$file.backup" 2>/dev/null
         fi
     fi
 done
 
-print_success "Modified $MODIFIED_HTML HTML files"
+print_success "Configured global appearance in $MODIFIED_MODULES module(s)"
+
+# Remove any existing appearance attributes from HTML templates (they're now redundant)
+print_info "Removing redundant appearance attributes from templates..."
+HTML_FILES=$(find src -name "*.html" -type f)
+CLEANED_HTML=0
+
+for file in $HTML_FILES; do
+    if grep -q 'mat-form-field.*appearance=' "$file"; then
+        cp "$file" "$file.backup"
+
+        # Remove appearance="outline" and appearance='outline' attributes
+        sed -i.tmp 's/ appearance="outline"//g' "$file"
+        sed -i.tmp "s/ appearance='outline'//g" "$file"
+
+        rm -f "$file.tmp"
+        CLEANED_HTML=$((CLEANED_HTML + 1))
+        print_success "Cleaned template: $file"
+    fi
+done
+
+print_success "Cleaned $CLEANED_HTML HTML template(s)"
 
 # Step 5: Test build
 print_info "Testing build..."
@@ -224,7 +279,8 @@ git commit -m "Phase 3: Material Legacy to MDC migration complete
 - Updated $MODIFIED_TS TypeScript files
 - Updated $MODIFIED_SCSS SCSS/CSS files (mat-legacy-* → mat-mdc-*)
 - Removed legacy theme from styles.scss
-- Added appearance='outline' to form fields ($MODIFIED_HTML files)
+- Configured global MAT_FORM_FIELD_DEFAULT_OPTIONS in $MODIFIED_MODULES module(s)
+- Cleaned $CLEANED_HTML HTML template(s) (removed redundant appearance attributes)
 - Build successful" || print_warning "Nothing to commit"
 
 # Cleanup backups
@@ -244,7 +300,8 @@ echo ""
 print_success "Material Legacy components migrated to MDC"
 print_success "All imports updated"
 print_success "All CSS classes updated"
-print_success "Form fields updated with appearance attribute"
+print_success "Global form field appearance configured (MAT_FORM_FIELD_DEFAULT_OPTIONS)"
+print_success "Templates cleaned (redundant appearance attributes removed)"
 print_success "Build tested successfully"
 echo ""
 print_info "Next step: Run phase4-angular-updates.sh"

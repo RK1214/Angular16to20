@@ -125,7 +125,8 @@ chmod +x migration-scripts/*.sh
   - `.mat-legacy-table` → `.mat-mdc-table`
   - And all other legacy selectors
 - Removes legacy theme from `src/styles.scss`
-- Adds `appearance="outline"` to all `<mat-form-field>` elements
+- Configures global `MAT_FORM_FIELD_DEFAULT_OPTIONS` in module files (sets `appearance: 'outline'`)
+- Removes redundant `appearance` attributes from HTML templates
 - Runs build to verify changes
 
 **Components Supported:**
@@ -138,7 +139,8 @@ chmod +x migration-scripts/*.sh
 **Output:**
 - Updated TypeScript files (MDC imports)
 - Updated SCSS files (MDC selectors)
-- Updated HTML files (appearance attributes)
+- Updated module files (global form field configuration)
+- Cleaned HTML templates (redundant attributes removed)
 - Build verification
 
 **Time:** 5-10 minutes
@@ -335,8 +337,9 @@ npx ng update @angular/core@17 --force
 
 ### Issue: Build fails after Phase 3
 - Check for any custom Material styling that uses legacy selectors
-- Verify form fields have valid `appearance` attributes
+- Verify `MAT_FORM_FIELD_DEFAULT_OPTIONS` is properly configured in module providers
 - Check browser console for runtime errors
+- Ensure all module imports are correct
 
 ### Issue: Phase 4 takes too long
 - Ensure stable internet connection
