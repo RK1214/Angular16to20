@@ -912,6 +912,306 @@ This allows rolling back to any checkpoint if issues arise.
 
 ---
 
+## Common Issues & Troubleshooting
+
+This section documents issues encountered during the actual migration and their solutions.
+
+### Issue 1: Repository Not Clean Error
+
+**Error:**
+```
+Error: Repository is not clean. Please commit or stash any changes before updating.
+```
+
+**Cause:**
+Creating backup files (like `package.json.v16-backup`) before running `ng update` causes the repository to be considered "not clean".
+
+**Solution:**
+1. Add backup file patterns to `.gitignore` BEFORE creating backups:
+   ```bash
+   echo "*.v*-backup" >> .gitignore
+   git add .gitignore
+   git commit -m "Add backup files to gitignore"
+   ```
+
+2. Alternative: Don't create backup files manually. Instead, rely on git history:
+   ```bash
+   # No need for package.json.v16-backup - git already tracks changes
+   ng update @angular/core@17 @angular/cli@17 --force
+   ```
+
+**Prevention:**
+Update `.gitignore` at the start of Phase 1 with all backup patterns you plan to use.
+
+---
+
+### Issue 2: Angular In-Memory Web API Peer Dependency Conflicts
+
+**Error:**
+```
+npm error ERESOLVE unable to resolve dependency tree
+npm error peer @angular/common@"^16.0.0" from angular-in-memory-web-api@0.16.0
+```
+
+**Cause:**
+`angular-in-memory-web-api` has strict peer dependencies that must match your Angular version.
+
+**Solution:**
+Install the correct version for each Angular major version:
+
+```bash
+# For Angular 17
+npm install angular-in-memory-web-api@0.17.0 --save --legacy-peer-deps
+
+# For Angular 18
+npm install angular-in-memory-web-api@0.18.0 --save --legacy-peer-deps
+
+# For Angular 19
+npm install angular-in-memory-web-api@0.19.0 --save --legacy-peer-deps
+
+# For Angular 20
+npm install angular-in-memory-web-api@0.20.0 --save --legacy-peer-deps
+```
+
+**Note:** Always use `--legacy-peer-deps` flag when installing this package during migration.
+
+---
+
+### Issue 3: HttpClientModule Deprecated in Angular 18
+
+**Migration Output:**
+```
+❯ Replace deprecated HTTP related modules with provider functions.
+UPDATE src/app/app.module.ts
+```
+
+**What Changed:**
+Angular 18 automatically migrates from `HttpClientModule` import to `provideHttpClient()` provider function.
+
+**Before (Angular 16-17):**
+```typescript
+import { HttpClientModule } from '@angular/common/http';
+
+@NgModule({
+  imports: [
+    HttpClientModule,
+    // ...
+  ]
+})
+```
+
+**After (Angular 18+):**
+```typescript
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+
+@NgModule({
+  imports: [
+    // HttpClientModule removed
+  ],
+  providers: [
+    provideHttpClient(withInterceptorsFromDi())
+  ]
+})
+```
+
+**Action Required:** None - migration handles this automatically. Just verify the build succeeds.
+
+---
+
+### Issue 4: Material Theme API Changes in Angular 18
+
+**Migration Output:**
+```
+Migration completed (1 file modified)
+UPDATE src/styles.scss
+```
+
+**What Changed:**
+Angular Material 18 introduced Material 2 (M2) theme API prefixes.
+
+**Before (Angular 16-17):**
+```scss
+$primary: mat.define-palette(mat.$indigo-palette);
+$theme: mat.define-light-theme((
+  color: (
+    primary: $primary,
+    accent: $accent
+  )
+));
+```
+
+**After (Angular 18+):**
+```scss
+$primary: mat.m2-define-palette(mat.$m2-indigo-palette);
+$theme: mat.m2-define-light-theme((
+  color: (
+    primary: $primary,
+    accent: $accent
+  )
+));
+```
+
+**Action Required:** None - migration handles this automatically.
+
+---
+
+### Issue 5: Sass @import Deprecation Warning
+
+**Warning:**
+```
+Deprecation Warning on line 3, column 8:
+Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+@import './styles/layout';
+```
+
+**Cause:**
+Sass is deprecating `@import` in favor of `@use` and `@forward`.
+
+**Current Workaround:**
+The warning is non-blocking. The build succeeds despite the warning.
+
+**Future Solution (Optional):**
+Convert layout utilities file to use `@forward`:
+
+**styles/_layout.scss:**
+```scss
+// Add this at the top of _layout.scss
+@forward 'sass:map';
+@forward 'sass:list';
+```
+
+**styles.scss:**
+```scss
+@use './styles/layout';
+// Now @import is replaced with @use
+```
+
+**Priority:** Low - Can be addressed in a future refactoring.
+
+---
+
+### Issue 6: Component Standalone Flag in Angular 19
+
+**Migration Output:**
+```
+❯ Updates non-standalone Directives, Component and Pipes to 'standalone:false'
+UPDATE src/app/app.component.ts
+UPDATE src/app/features/home/home.component.ts
+UPDATE src/app/features/users/users-list.component.ts
+UPDATE src/app/features/users/user-form.component.ts
+```
+
+**What Changed:**
+Angular 19 requires explicit `standalone` property on all components.
+
+**Before (Angular 16-18):**
+```typescript
+@Component({
+  selector: 'app-users-list',
+  templateUrl: './users-list.component.html'
+})
+export class UsersListComponent { }
+```
+
+**After (Angular 19+):**
+```typescript
+@Component({
+  selector: 'app-users-list',
+  templateUrl: './users-list.component.html',
+  standalone: false  // Explicitly declares NgModule architecture
+})
+export class UsersListComponent { }
+```
+
+**Action Required:** None - migration adds `standalone: false` automatically for NgModule-based components.
+
+---
+
+### Issue 7: TypeScript moduleResolution Update in Angular 20
+
+**Migration Output:**
+```
+❯ Update 'moduleResolution' to 'bundler' in TypeScript configurations.
+UPDATE tsconfig.json
+```
+
+**What Changed:**
+Angular 20 updates `moduleResolution` to `"bundler"` for better compatibility with modern build tools.
+
+**Before:**
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "node"
+  }
+}
+```
+
+**After:**
+```json
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler"
+  }
+}
+```
+
+**Action Required:** None - migration handles this automatically.
+
+---
+
+### Issue 8: Material 19/20 Elevation and Background Mixins
+
+**Migration Output:**
+```
+UPDATE src/styles.scss
+```
+
+**What Changed:**
+Material 19+ requires explicit inclusion of elevation and background mixins.
+
+**Added to styles.scss:**
+```scss
+@include mat.elevation-classes();
+@include mat.app-background();
+```
+
+**Action Required:** None - migration adds these automatically.
+
+---
+
+### Best Practices from Actual Migration
+
+1. **Always commit before running ng update**
+   - Ensures clean rollback if issues occur
+   - Makes it easier to see what changed
+
+2. **Run migrations one major version at a time**
+   - Don't try 16 → 20 in one step
+   - Follow the path: 16 → 17 → 18 → 19 → 20
+
+3. **Use --force flag for ng update**
+   - Required when peer dependencies don't perfectly align
+   - Example: `ng update @angular/core@17 --force`
+
+4. **Install packages separately from ng update**
+   - Update angular-in-memory-web-api after ng update completes
+   - Prevents dependency resolution conflicts
+
+5. **Test build after each major version**
+   - Don't proceed to next version if current build fails
+   - Fix issues incrementally
+
+6. **Monitor bundle size**
+   - Track bundle size after each phase
+   - Our journey: 754kB → 744kB → 790kB → 819kB → 802kB → 810kB → 851kB
+
+7. **Ignore non-blocking warnings**
+   - Sass @import deprecation is non-blocking
+   - Focus on errors first, warnings later
+
+---
+
 ## Success Criteria
 
 Migration is complete when:
@@ -981,5 +1281,13 @@ Before starting migration:
 ---
 
 *Last Updated: 2025-11-18*
-*Version: 1.0*
-*Status: Ready for Review*
+*Version: 2.0 - Post-Migration Edition*
+*Status: ✅ Migration Complete - Includes Real-World Issues & Solutions*
+
+**Migration Results:**
+- ✅ Successfully migrated from Angular 16.2.0 to 20.3.12
+- ✅ Successfully migrated from Material 16 (Legacy) to Material 20 (MDC)
+- ✅ Successfully removed Angular Flex Layout and replaced with CSS
+- ✅ Final bundle size: 851.48 kB
+- ✅ Application running successfully on localhost:4200
+- ✅ All features tested and validated
