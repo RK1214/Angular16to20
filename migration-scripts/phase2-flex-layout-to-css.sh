@@ -408,7 +408,7 @@ import { convertFlexValue, convertGapValue } from '../utils/flex.utils';
  */
 @Directive({
   selector: '[appFlex]',
-  standalone: true
+  standalone: false
 })
 export class FlexDirective implements OnInit, OnChanges {
   @Input() appFlex: string | number = '1 1 auto';
@@ -444,7 +444,7 @@ export class FlexDirective implements OnInit, OnChanges {
  */
 @Directive({
   selector: '[appGap]',
-  standalone: true
+  standalone: false
 })
 export class GapDirective implements OnInit, OnChanges {
   @Input() appGap: string | number = '0';
@@ -474,43 +474,43 @@ DIR_EOF
 print_success "Created flex utilities and directives"
 
 # Step 6: Import directives into modules that use dynamic flex bindings
-print_info "Importing FlexDirective and GapDirective into components..."
+print_info "Importing FlexDirective and GapDirective into modules..."
 
-# Find components that use appFlex or appGap
-COMPONENTS_USING_DIRECTIVES=$(grep -l "appFlex\|appGap" $(find src -name "*.html" -type f) 2>/dev/null | sed 's/\.html$/\.ts/g')
+# Find if any HTML files use appFlex or appGap
+if grep -r "appFlex\|appGap" src --include="*.html" > /dev/null 2>&1; then
+    # Find all module files
+    MODULE_FILES=$(find src -name "*.module.ts" -type f)
 
-if [ -n "$COMPONENTS_USING_DIRECTIVES" ]; then
-    for comp_file in $COMPONENTS_USING_DIRECTIVES; do
-        if [ -f "$comp_file" ]; then
-            # Check if it's a standalone component or needs module import
-            if grep -q "standalone: true" "$comp_file"; then
-                # Standalone component - add to imports array
-                if ! grep -q "FlexDirective\|GapDirective" "$comp_file"; then
-                    cp "$comp_file" "$comp_file.backup"
+    for module_file in $MODULE_FILES; do
+        # Check if module doesn't already import the directives
+        if ! grep -q "FlexDirective\|GapDirective" "$module_file"; then
+            cp "$module_file" "$module_file.backup"
 
-                    # Add import statement
-                    if ! grep -q "from.*shared/directives/flex.directive" "$comp_file"; then
-                        # Add import after other Angular imports
-                        sed -i.tmp "/^import.*@angular/a\\
-import { FlexDirective, GapDirective } from '../../shared/directives/flex.directive';
-" "$comp_file"
-                    fi
+            # Add import statement
+            if ! grep -q "from.*shared/directives/flex.directive" "$module_file"; then
+                # Add import after other imports
+                sed -i.tmp "/^import/a\\
+import { FlexDirective, GapDirective } from './shared/directives/flex.directive';
+" "$module_file"
+            fi
 
-                    # Add to imports array in @Component decorator
-                    sed -i.tmp "/imports: \[/a\\
+            # Add to declarations array in @NgModule
+            if grep -q "declarations: \[" "$module_file"; then
+                sed -i.tmp "/declarations: \[/a\\
     FlexDirective,\\
-    GapDirective," "$comp_file"
+    GapDirective," "$module_file"
 
-                    rm -f "$comp_file.tmp"
-                    print_success "Added directives to standalone component: $comp_file"
-                fi
+                rm -f "$module_file.tmp"
+                print_success "Added directives to module: $module_file"
+            else
+                rm "$module_file.backup" 2>/dev/null
             fi
         fi
     done
 
-    print_success "Imported directives into components using dynamic flex"
+    print_success "Imported directives into modules using dynamic flex"
 else
-    print_info "No components found using dynamic flex bindings (appFlex/appGap)"
+    print_info "No templates found using dynamic flex bindings (appFlex/appGap)"
 fi
 
 # Step 7: Remove FlexLayoutModule from app.module.ts and other module files
@@ -570,12 +570,9 @@ git commit -m "Phase 2: Migrated Angular Flex Layout to CSS
 Modified $MODIFIED_COUNT HTML files" || print_warning "Nothing to commit"
 
 # Cleanup backup files
-read -p "Delete .backup files? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    find src -name "*.backup" -delete
-    print_success "Backup files deleted"
-fi
+print_info "Cleaning up backup files..."
+find src -name "*.backup" -delete
+print_success "Backup files deleted"
 
 # Summary
 echo ""

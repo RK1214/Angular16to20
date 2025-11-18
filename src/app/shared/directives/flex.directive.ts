@@ -12,7 +12,7 @@ import { convertFlexValue, convertGapValue } from '../utils/flex.utils';
  */
 @Directive({
   selector: '[appFlex]',
-  standalone: true
+  standalone: false
 })
 export class FlexDirective implements OnInit, OnChanges {
   @Input() appFlex: string | number = '1 1 auto';
@@ -48,7 +48,7 @@ export class FlexDirective implements OnInit, OnChanges {
  */
 @Directive({
   selector: '[appGap]',
-  standalone: true
+  standalone: false
 })
 export class GapDirective implements OnInit, OnChanges {
   @Input() appGap: string | number = '0';

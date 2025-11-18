@@ -6,10 +6,8 @@
 #
 # This script:
 # - Checks prerequisites
-# - Creates git branches
-# - Updates .gitignore
 # - Creates inventory of components
-# - Backs up current state
+# - Analyzes Flex Layout and Material Legacy usage
 ################################################################################
 
 set -e  # Exit on error
@@ -93,56 +91,11 @@ if ! git diff-index --quiet HEAD -- 2>/dev/null; then
     fi
 fi
 
-# Create backup branch
-print_info "Creating backup branch..."
+# Check current branch
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if git show-ref --verify --quiet refs/heads/pre-migration-backup; then
-    print_warning "pre-migration-backup branch already exists"
-else
-    git branch pre-migration-backup
-    print_success "Created pre-migration-backup branch"
-fi
-
-# Create migration branch
-print_info "Creating migration branch..."
-if git show-ref --verify --quiet refs/heads/feature/angular-20-migration; then
-    print_warning "feature/angular-20-migration branch already exists"
-    read -p "Switch to existing branch? (y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        git checkout feature/angular-20-migration
-    fi
-else
-    git checkout -b feature/angular-20-migration
-    print_success "Created and switched to feature/angular-20-migration branch"
-fi
-
-# Update .gitignore
-print_info "Updating .gitignore..."
-GITIGNORE_ADDITIONS=(
-    "*.v*-backup"
-    "*.backup"
-    ".migration-backup/"
-)
-
-for pattern in "${GITIGNORE_ADDITIONS[@]}"; do
-    if ! grep -q "^${pattern}$" .gitignore 2>/dev/null; then
-        echo "$pattern" >> .gitignore
-        print_success "Added $pattern to .gitignore"
-    fi
-done
-
-# Create migration directory for backups
-mkdir -p .migration-backup
-print_success "Created .migration-backup directory"
-
-# Backup critical files
-print_info "Backing up critical files..."
-cp package.json .migration-backup/package.json.original
-cp package-lock.json .migration-backup/package-lock.json.original 2>/dev/null || true
-[ -f "angular.json" ] && cp angular.json .migration-backup/angular.json.original
-[ -f "tsconfig.json" ] && cp tsconfig.json .migration-backup/tsconfig.json.original
-print_success "Critical files backed up to .migration-backup/"
+print_info "Working on branch: $CURRENT_BRANCH"
+print_warning "Migration will proceed on the current branch"
+echo ""
 
 # Create inventory
 print_info "Creating migration inventory..."
@@ -234,10 +187,8 @@ print_info "Committing Phase 1 changes..."
 git add .gitignore MIGRATION_INVENTORY.md
 git commit -m "Phase 1: Preparation and setup complete
 
-- Created backup and migration branches
-- Updated .gitignore for migration files
 - Created migration inventory
-- Backed up critical files
+- Analyzed codebase for Flex Layout and Material Legacy usage
 
 Ready to begin Phase 2: Flex Layout migration" || print_warning "Nothing to commit"
 
@@ -247,9 +198,8 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}Phase 1 Complete!${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-print_success "Git branches created"
-print_success "Critical files backed up"
 print_success "Migration inventory generated"
+print_success "Working on branch: $CURRENT_BRANCH"
 echo ""
 print_info "Review MIGRATION_INVENTORY.md to see what will be migrated"
 print_info "Next step: Run phase2-flex-layout-to-css.sh"

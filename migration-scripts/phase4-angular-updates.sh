@@ -11,6 +11,10 @@
 # - Angular 19 → 20
 #
 # Including Material and auxiliary package updates
+#
+# Post-migration steps:
+# - Sets all components, directives, and pipes to standalone: false
+#   (maintains NgModule compatibility for non-standalone projects)
 ################################################################################
 
 set -e
@@ -40,13 +44,6 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Check if using angular-in-memory-web-api
-USING_INMEMORY_API=false
-if grep -q "angular-in-memory-web-api" package.json; then
-    USING_INMEMORY_API=true
-    print_info "Detected angular-in-memory-web-api - will update versions accordingly"
-fi
-
 #
 # Angular 16 → 17
 #
@@ -56,28 +53,30 @@ echo -e "${BLUE}Step 1/4: Angular 16 → 17${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-print_info "Updating to Angular 17..."
+print_info "Updating Angular Core and CLI to 17..."
 ng update @angular/core@17 @angular/cli@17 --force
 
-print_info "Updating Material to 17..."
+print_info "Committing Angular Core 17 update..."
+git add -A
+git commit -m "Phase 4.1a: Updated Angular Core and CLI to 17
+
+- @angular/core: 17.x
+- @angular/cli: 17.x
+- TypeScript: 5.4.x
+- zone.js: 0.14.x" || true
+
+print_info "Updating Angular Material to 17..."
 ng update @angular/material@17 --force
 
-if [ "$USING_INMEMORY_API" = true ]; then
-    print_info "Updating angular-in-memory-web-api to 0.17.0..."
-    npm install angular-in-memory-web-api@0.17.0 --save --legacy-peer-deps
-fi
+print_info "Committing Material 17 update..."
+git add -A
+git commit -m "Phase 4.1b: Updated Angular Material to 17
+
+- @angular/material: 17.x
+- @angular/cdk: 17.x" || true
 
 print_info "Testing Angular 17 build..."
 npm run build
-
-git add -A
-git commit -m "Phase 4.1: Updated to Angular 17
-
-- Angular core: 17.3.x
-- Material: 17.3.x
-- TypeScript: 5.4.x
-- zone.js: 0.14.x
-$([ "$USING_INMEMORY_API" = true ] && echo "- angular-in-memory-web-api: 0.17.0")" || true
 
 print_success "Angular 17 update complete!"
 
@@ -90,51 +89,30 @@ echo -e "${BLUE}Step 2/4: Angular 17 → 18${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-print_info "Updating to Angular 18..."
+print_info "Updating Angular Core and CLI to 18..."
 ng update @angular/core@18 @angular/cli@18 --force
 
-print_warning "Angular 18 may convert HttpClientModule to provideHttpClient()"
-print_warning "If using angular-in-memory-web-api, you'll need to revert this"
+print_info "Committing Angular Core 18 update..."
+git add -A
+git commit -m "Phase 4.2a: Updated Angular Core and CLI to 18
 
-print_info "Updating Material to 18..."
+- @angular/core: 18.x
+- @angular/cli: 18.x
+- TypeScript: 5.5.x" || true
+
+print_info "Updating Angular Material to 18..."
 ng update @angular/material@18 --force
 
-if [ "$USING_INMEMORY_API" = true ]; then
-    print_info "Updating angular-in-memory-web-api to 0.18.0..."
-    npm install angular-in-memory-web-api@0.18.0 --save --legacy-peer-deps
+print_info "Committing Material 18 update..."
+git add -A
+git commit -m "Phase 4.2b: Updated Angular Material to 18
 
-    # Check if HttpClientModule was converted
-    if grep -q "provideHttpClient" src/app/app.module.ts; then
-        print_warning "Detected provideHttpClient conversion - reverting for InMemoryWebApi compatibility"
-
-        # Backup
-        cp src/app/app.module.ts src/app/app.module.ts.backup
-
-        # Revert to HttpClientModule
-        sed -i.tmp "s/import { provideHttpClient, withInterceptorsFromDi } from '@angular\/common\/http';/import { HttpClientModule } from '@angular\/common\/http';/g" src/app/app.module.ts
-        sed -i.tmp 's/, providers:.*provideHttpClient.*$/]/g' src/app/app.module.ts
-
-        # Add HttpClientModule to imports if not present
-        if ! grep -q "HttpClientModule," src/app/app.module.ts; then
-            sed -i.tmp '/imports: \[/a\    HttpClientModule,' src/app/app.module.ts
-        fi
-
-        rm -f src/app/app.module.ts.tmp
-        print_success "Reverted to HttpClientModule for InMemoryWebApi compatibility"
-    fi
-fi
+- @angular/material: 18.x
+- @angular/cdk: 18.x
+- Theme API updated to mat.m2-define-palette()" || true
 
 print_info "Testing Angular 18 build..."
 npm run build
-
-git add -A
-git commit -m "Phase 4.2: Updated to Angular 18
-
-- Angular core: 18.2.x
-- Material: 18.2.x (M2 theme API)
-- Theme API updated to mat.m2-define-palette()
-$([ "$USING_INMEMORY_API" = true ] && echo "- angular-in-memory-web-api: 0.18.0")
-$([ "$USING_INMEMORY_API" = true ] && echo "- Reverted to HttpClientModule for compatibility")" || true
 
 print_success "Angular 18 update complete!"
 
@@ -147,30 +125,30 @@ echo -e "${BLUE}Step 3/4: Angular 18 → 19${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-print_info "Updating to Angular 19..."
+print_info "Updating Angular Core and CLI to 19..."
 ng update @angular/core@19 @angular/cli@19 --force
 
-print_info "Updating Material to 19..."
+print_info "Committing Angular Core 19 update..."
+git add -A
+git commit -m "Phase 4.3a: Updated Angular Core and CLI to 19
+
+- @angular/core: 19.x
+- @angular/cli: 19.x
+- TypeScript: 5.7.x
+- zone.js: 0.15.x" || true
+
+print_info "Updating Angular Material to 19..."
 ng update @angular/material@19 --force
 
-if [ "$USING_INMEMORY_API" = true ]; then
-    print_info "Updating angular-in-memory-web-api to 0.19.0..."
-    npm install angular-in-memory-web-api@0.19.0 --save --legacy-peer-deps
-fi
+print_info "Committing Material 19 update..."
+git add -A
+git commit -m "Phase 4.3b: Updated Angular Material to 19
+
+- @angular/material: 19.x
+- @angular/cdk: 19.x" || true
 
 print_info "Testing Angular 19 build..."
 npm run build
-
-git add -A
-git commit -m "Phase 4.3: Updated to Angular 19
-
-- Angular core: 19.2.x
-- Material: 19.2.x
-- TypeScript: 5.8.x
-- zone.js: 0.15.x
-- Added 'standalone: false' to all components
-- Added elevation and background mixins to styles
-$([ "$USING_INMEMORY_API" = true ] && echo "- angular-in-memory-web-api: 0.19.0")" || true
 
 print_success "Angular 19 update complete!"
 
@@ -183,28 +161,101 @@ echo -e "${BLUE}Step 4/4: Angular 19 → 20${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
-print_info "Updating to Angular 20..."
+print_info "Updating Angular Core and CLI to 20..."
 ng update @angular/core@20 @angular/cli@20 --force
 
-print_info "Updating Material to 20..."
+print_info "Committing Angular Core 20 update..."
+git add -A
+git commit -m "Phase 4.4a: Updated Angular Core and CLI to 20
+
+- @angular/core: 20.x
+- @angular/cli: 20.x
+- TypeScript: 5.8.x
+- tsconfig moduleResolution: bundler" || true
+
+print_info "Updating Angular Material to 20..."
 ng update @angular/material@20 --force
 
-if [ "$USING_INMEMORY_API" = true ]; then
-    print_info "Updating angular-in-memory-web-api to 0.20.0..."
-    npm install angular-in-memory-web-api@0.20.0 --save --legacy-peer-deps
+print_info "Committing Material 20 update..."
+git add -A
+git commit -m "Phase 4.4b: Updated Angular Material to 20
+
+- @angular/material: 20.x
+- @angular/cdk: 20.x" || true
+
+# Step: Ensure all components, directives, and pipes are set to standalone: false
+# This maintains NgModule compatibility for projects not migrating to standalone components
+echo ""
+print_info "Setting all components, directives, and pipes to standalone: false for NgModule compatibility..."
+
+# Find all TypeScript files with @Component, @Directive, or @Pipe decorators
+TS_FILES=$(find src -type f -name "*.ts")
+MODIFIED_COUNT=0
+
+for file in $TS_FILES; do
+    # Check if file contains @Component, @Directive, or @Pipe decorator
+    if grep -q "@Component\|@Directive\|@Pipe" "$file"; then
+        NEEDS_UPDATE=false
+
+        # Check if standalone: true exists
+        if grep -q "standalone: *true" "$file"; then
+            NEEDS_UPDATE=true
+            ACTION="Changed standalone: true to false"
+        # Check if file has decorator but no standalone property
+        elif grep -q "@Component\|@Directive\|@Pipe" "$file" && ! grep -q "standalone:" "$file"; then
+            NEEDS_UPDATE=true
+            ACTION="Added standalone: false"
+        fi
+
+        if [ "$NEEDS_UPDATE" = true ]; then
+            cp "$file" "$file.backup"
+
+            # Case 1: Change standalone: true to standalone: false
+            sed -i.tmp 's/standalone: *true/standalone: false/g' "$file"
+
+            # Case 2: Add standalone: false to decorators that don't have it
+            # For @Component decorator
+            if grep -q "@Component" "$file" && ! grep -q "standalone:" "$file"; then
+                # Add standalone: false after the opening brace of decorator metadata
+                sed -i.tmp '/@Component({/a\
+  standalone: false,' "$file"
+            fi
+
+            # For @Directive decorator
+            if grep -q "@Directive" "$file" && ! grep -q "standalone:" "$file"; then
+                sed -i.tmp '/@Directive({/a\
+  standalone: false,' "$file"
+            fi
+
+            # For @Pipe decorator
+            if grep -q "@Pipe" "$file" && ! grep -q "standalone:" "$file"; then
+                sed -i.tmp '/@Pipe({/a\
+  standalone: false,' "$file"
+            fi
+
+            rm -f "$file.tmp"
+            MODIFIED_COUNT=$((MODIFIED_COUNT + 1))
+            print_success "$ACTION in: $file"
+        fi
+    fi
+done
+
+if [ $MODIFIED_COUNT -gt 0 ]; then
+    print_success "Updated $MODIFIED_COUNT component(s)/directive(s)/pipe(s) to standalone: false"
+else
+    print_info "All components/directives/pipes already have standalone: false (or are using NgModules)"
 fi
 
 print_info "Testing Angular 20 build..."
 npm run build
 
+print_info "Committing standalone: false changes..."
 git add -A
-git commit -m "Phase 4.4: Updated to Angular 20 - FINAL VERSION!
+git commit -m "Phase 4.4c: Set all components/directives/pipes to standalone: false
 
-- Angular core: 20.3.x
-- Material: 20.2.x
-- TypeScript: 5.8.x
-- tsconfig moduleResolution: bundler
-$([ "$USING_INMEMORY_API" = true ] && echo "- angular-in-memory-web-api: 0.20.0")
+- Ensures NgModule compatibility for non-standalone projects
+- Modified $MODIFIED_COUNT component(s)/directive(s)/pipe(s)
+- All @Component, @Directive, and @Pipe decorators now have standalone: false
 
 🎉 Angular 20 migration complete!" || true
 

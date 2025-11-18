@@ -27,9 +27,17 @@ import { HomeComponent } from './features/home/home.component';
 import { UsersListComponent } from './features/users/users-list.component';
 import { UserFormComponent } from './features/users/user-form.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { FlexDirective, GapDirective } from './shared/directives/flex.directive';
 
 @NgModule({
-  declarations: [AppComponent, HomeComponent, UsersListComponent, UserFormComponent],
+  declarations: [
+    AppComponent,
+    HomeComponent,
+    UsersListComponent,
+    UserFormComponent,
+    FlexDirective,
+    GapDirective
+  ],
   bootstrap: [AppComponent],
   imports: [
     BrowserModule,
