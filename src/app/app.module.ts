@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { InMemoryWebApiModule } from 'angular-in-memory-web-api';
 import { MockBackendService } from './core/mock-backend.service';
@@ -27,28 +27,22 @@ import { UsersListComponent } from './features/users/users-list.component';
 import { UserFormComponent } from './features/users/user-form.component';
 import { ReactiveFormsModule } from '@angular/forms';
 
-@NgModule({
-  declarations: [AppComponent, HomeComponent, UsersListComponent, UserFormComponent],
-  imports: [
-    BrowserModule,
-    BrowserAnimationsModule,
-    HttpClientModule,
-    InMemoryWebApiModule.forRoot(MockBackendService, { delay: 400 }),
-    RouterModule.forRoot(APP_ROUTES),
-    MatToolbarModule,
-    MatButtonModule,
-    MatCardModule,
-    MatInputModule,
-    MatTableModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatListModule,
-    MatDividerModule,
-    MatSnackBarModule,
-    MatTooltipModule,
-    MatSelectModule,
-    ReactiveFormsModule
-  ],
-  bootstrap: [AppComponent]
-})
+@NgModule({ declarations: [AppComponent, HomeComponent, UsersListComponent, UserFormComponent],
+    bootstrap: [AppComponent], imports: [BrowserModule,
+        BrowserAnimationsModule,
+        InMemoryWebApiModule.forRoot(MockBackendService, { delay: 400 }),
+        RouterModule.forRoot(APP_ROUTES),
+        MatToolbarModule,
+        MatButtonModule,
+        MatCardModule,
+        MatInputModule,
+        MatTableModule,
+        MatFormFieldModule,
+        MatIconModule,
+        MatListModule,
+        MatDividerModule,
+        MatSnackBarModule,
+        MatTooltipModule,
+        MatSelectModule,
+        ReactiveFormsModule], providers: [provideHttpClient(withInterceptorsFromDi())] })
 export class AppModule {}
