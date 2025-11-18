@@ -16,7 +16,6 @@ $theme: mat.define-light-theme((
 ));
 
 @include mat.all-component-themes($theme);
-@include mat.all-legacy-component-themes($theme);
 
 html, body, app-root {
   height: 100%;
@@ -26,24 +25,23 @@ body {
   font-family: Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-.mat-toolbar, .mat-legacy-toolbar {
+.mat-toolbar {
   background: linear-gradient(90deg, rgba(33,150,243,1), rgba(63,81,181,1));
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   padding: 8px 16px;
 }
 
-.mat-button, .mat-legacy-button, .mat-raised-button, .mat-legacy-raised-button, .mat-icon-button, .mat-legacy-icon-button {
-  padding: 12px 20px;
+.mat-mdc-button, .mat-mdc-raised-button, .mat-mdc-icon-button {
   text-transform: uppercase;
 }
 
-.mat-table .mat-row:hover, .mat-legacy-table .mat-row:hover {
+.mat-mdc-table .mat-mdc-row:hover {
   background-color: rgba(0,0,0,0.03);
 }
 
 @media (max-width: 600px) {
-  .mat-toolbar, .mat-legacy-toolbar {
+  .mat-toolbar {
     border-radius: 0;
   }
 }
