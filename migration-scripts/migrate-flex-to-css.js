@@ -52,18 +52,23 @@ class FlexMigrator {
   extractDirectives(tagContent) {
     const directives = {};
 
+    // First, extract and preserve the entire class attribute (including template expressions)
+    // This regex handles class attributes that may contain {{ }} template expressions
+    const classRegex = /class="([^"]*(?:\{\{(?:[^}]|\}(?!\}))*\}\}[^"]*)*)"/;
+    const classMatch = classRegex.exec(tagContent);
+    if (classMatch) {
+      directives._existingClass = classMatch[1];
+      directives._existingClassOriginal = classMatch[0];
+    }
+
     // Patterns for all flex directives
     const patterns = [
-      // Static directives
-      { regex: /fxLayout(?:\.([a-z\-]+))?="([^"]*)"/g, name: 'fxLayout' },
-      { regex: /fxLayoutAlign(?:\.([a-z\-]+))?="([^"]*)"/g, name: 'fxLayoutAlign' },
-      { regex: /fxLayoutGap(?:\.([a-z\-]+))?="([^"]*)"/g, name: 'fxLayoutGap' },
-      { regex: /fxFlex(?:\.([a-z\-]+))?="([^"]*)"/g, name: 'fxFlex' },
-      { regex: /fxFlexOrder(?:\.([a-z\-]+))?="([^"]*)"/g, name: 'fxFlexOrder' },
-      { regex: /fxFlexOffset(?:\.([a-z\-]+))?="([^"]*)"/g, name: 'fxFlexOffset' },
-      { regex: /fxFlexAlign(?:\.([a-z\-]+))?="([^"]*)"/g, name: 'fxFlexAlign' },
-      { regex: /fxShow(?:\.([a-z\-]+))?(?:="([^"]*)")?/g, name: 'fxShow' },
-      { regex: /fxHide(?:\.([a-z\-]+))?(?:="([^"]*)")?/g, name: 'fxHide' },
+      // Template string bindings (must come first) - convert to property bindings
+      { regex: /fxLayout(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxLayout', templateString: true },
+      { regex: /fxLayoutAlign(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxLayoutAlign', templateString: true },
+      { regex: /fxLayoutGap(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxLayoutGap', templateString: true },
+      { regex: /fxFlex(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxFlex', templateString: true },
+
       // Dynamic bindings
       { regex: /\[fxLayout(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxLayout', dynamic: true },
       { regex: /\[fxLayoutAlign(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxLayoutAlign', dynamic: true },
@@ -72,31 +77,40 @@ class FlexMigrator {
       { regex: /\[fxFlexOrder(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxFlexOrder', dynamic: true },
       { regex: /\[fxShow(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxShow', dynamic: true },
       { regex: /\[fxHide(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxHide', dynamic: true },
-      // Standalone fxFlex
-      { regex: /fxFlex(?![\[\.\="a-zA-Z])/g, name: 'fxFlex', standalone: true },
+
+      // Static directives (must come after template strings and NOT match {{...}})
+      { regex: /fxLayout(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxLayout' },
+      { regex: /fxLayoutAlign(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxLayoutAlign' },
+      { regex: /fxLayoutGap(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxLayoutGap' },
+      { regex: /fxFlex(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxFlex' },
+      { regex: /fxFlexOrder(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxFlexOrder' },
+      { regex: /fxFlexOffset(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxFlexOffset' },
+      { regex: /fxFlexAlign(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxFlexAlign' },
+      { regex: /fxShow(?:\.([a-z\-]+))?(?:="((?:(?!\{\{)[^"])*)")?/g, name: 'fxShow' },
+      { regex: /fxHide(?:\.([a-z\-]+))?(?:="((?:(?!\{\{)[^"])*)")?/g, name: 'fxHide' },
+
+      // Standalone fxFlex (with or without breakpoint)
+      // Use word boundary to avoid matching inside [fxFlex]
+      { regex: /\sfxFlex\.([a-z\-]+)(?!\s*=)/g, name: 'fxFlex', standaloneWithBreakpoint: true },
+      { regex: /\sfxFlex(?![\[\.\="a-zA-Z])/g, name: 'fxFlex', standalone: true },
     ];
 
-    patterns.forEach(({ regex, name, dynamic = false, standalone = false }) => {
+    patterns.forEach(({ regex, name, dynamic = false, standalone = false, standaloneWithBreakpoint = false, templateString = false }) => {
       let match;
       while ((match = regex.exec(tagContent)) !== null) {
-        const breakpoint = match[1] || null;
-        const value = standalone ? true : (match[2] || true);
+        const breakpoint = standaloneWithBreakpoint ? match[1] : (match[1] || null);
+        const value = standalone || standaloneWithBreakpoint ? true : (match[2] || true);
         const key = breakpoint ? `${name}.${breakpoint}` : name;
 
         directives[key] = {
           value,
-          isDynamic: dynamic,
+          isDynamic: dynamic || templateString,
+          isTemplateString: templateString,
           breakpoint,
           original: match[0]
         };
       }
     });
-
-    // Extract existing class attribute
-    const classMatch = /class="([^"]*)"/.exec(tagContent);
-    if (classMatch) {
-      directives._existingClass = classMatch[1];
-    }
 
     return directives;
   }
@@ -167,12 +181,29 @@ class FlexMigrator {
   /**
    * Convert fxFlex to CSS classes or directive
    */
-  convertFlex(value, breakpoint = null) {
+  convertFlex(value, breakpoint = null, isTemplateString = false, isDynamic = false) {
     if (value === true || value === '') {
-      return { classes: ['flex-1'], directive: null };
+      const suffix = breakpoint ? `-${breakpoint}` : '';
+      return { classes: [`flex-1${suffix}`], directive: null };
     }
 
     const valueStr = String(value);
+
+    // Dynamic binding - convert to directive
+    if (isDynamic) {
+      if (breakpoint) {
+        this.warnings.add(`Dynamic fxFlex with breakpoint '.${breakpoint}' needs manual review`);
+      }
+      return { classes: [], directive: `[appFlex]="${valueStr}"` };
+    }
+
+    // Template string binding - convert to property binding
+    if (isTemplateString) {
+      if (breakpoint) {
+        this.warnings.add(`Template string fxFlex with breakpoint '.${breakpoint}' needs manual review`);
+      }
+      return { classes: [], directive: `[appFlex]="${valueStr}"` };
+    }
 
     // Check if dynamic (contains {{ }} or complex expressions)
     if (valueStr.includes('{{') || valueStr.includes('?') || valueStr.includes('||') || valueStr.includes('&&')) {
@@ -201,9 +232,10 @@ class FlexMigrator {
       return { classes: [baseClass + suffix], directive: null };
     }
 
-    // Percentage
-    if (/^\d+$/.test(valueStr)) {
-      const baseClass = `flex-${valueStr}`;
+    // Percentage values (including 100%)
+    if (/^\d+%?$/.test(valueStr)) {
+      const num = valueStr.replace('%', '');
+      const baseClass = `flex-${num}`;
       const suffix = breakpoint ? `-${breakpoint}` : '';
       return { classes: [baseClass + suffix], directive: null };
     }
@@ -269,102 +301,141 @@ class FlexMigrator {
   migrateTag(tagContent) {
     const directives = this.extractDirectives(tagContent);
 
-    if (Object.keys(directives).length === 0 ||
-        (Object.keys(directives).length === 1 && directives._existingClass)) {
+    // Check if there are any flex directives
+    const hasFlexDirectives = Object.keys(directives).some(key =>
+      !key.startsWith('_') && key.startsWith('fx')
+    );
+
+    if (!hasFlexDirectives) {
       return tagContent;
     }
 
-    const cssClasses = new Set();
+    const newCssClasses = [];
     const directiveBindings = [];
-
-    // Get existing classes
-    if (directives._existingClass) {
-      directives._existingClass.split(/\s+/).forEach(cls => {
-        if (cls) cssClasses.add(cls);
-      });
-    }
 
     // Process each directive
     Object.entries(directives).forEach(([key, data]) => {
-      if (key === '_existingClass') return;
+      if (key.startsWith('_')) return; // Skip internal keys
 
       const directiveName = key.split('.')[0];
-      const { breakpoint, value, isDynamic } = data;
+      const { breakpoint, value, isDynamic, isTemplateString } = data;
 
       switch (directiveName) {
         case 'fxLayout':
-          if (isDynamic) {
+          if (isTemplateString) {
+            // Template string: fxLayout="{{expr}}" → [appLayout]="expr"
+            directiveBindings.push(`[appLayout]="${value}"`);
+          } else if (isDynamic) {
+            // Already dynamic binding: [fxLayout]="expr" → [appLayout]="expr"
             directiveBindings.push(`[appLayout]="${value}"`);
             this.warnings.add(`Dynamic fxLayout needs custom directive: [appLayout]="${value}"`);
           } else {
-            this.convertLayout(value, breakpoint).forEach(cls => cssClasses.add(cls));
+            // Static value: fxLayout="row" → class="flex-row"
+            this.convertLayout(value, breakpoint).forEach(cls => newCssClasses.push(cls));
           }
           break;
 
         case 'fxLayoutAlign':
-          if (isDynamic) {
+          if (isDynamic || isTemplateString) {
             directiveBindings.push(`[appLayoutAlign]="${value}"`);
             this.warnings.add('Dynamic fxLayoutAlign needs custom directive');
           } else {
-            this.convertLayoutAlign(value, breakpoint).forEach(cls => cssClasses.add(cls));
+            this.convertLayoutAlign(value, breakpoint).forEach(cls => newCssClasses.push(cls));
           }
           break;
 
         case 'fxLayoutGap':
           const gap = this.convertGap(value, breakpoint);
-          gap.classes.forEach(cls => cssClasses.add(cls));
+          gap.classes.forEach(cls => newCssClasses.push(cls));
           if (gap.directive) directiveBindings.push(gap.directive);
           break;
 
         case 'fxFlex':
-          const flex = this.convertFlex(value, breakpoint);
-          flex.classes.forEach(cls => cssClasses.add(cls));
+          const flex = this.convertFlex(value, breakpoint, isTemplateString, isDynamic);
+          flex.classes.forEach(cls => newCssClasses.push(cls));
           if (flex.directive) directiveBindings.push(flex.directive);
           break;
 
         case 'fxFlexOrder':
           const order = this.convertFlexOrder(value, breakpoint);
-          order.classes.forEach(cls => cssClasses.add(cls));
+          order.classes.forEach(cls => newCssClasses.push(cls));
           if (order.directive) directiveBindings.push(order.directive);
           break;
 
         case 'fxShow':
         case 'fxHide':
-          this.convertShowHide(directiveName, value, breakpoint).forEach(cls => cssClasses.add(cls));
+          this.convertShowHide(directiveName, value, breakpoint).forEach(cls => newCssClasses.push(cls));
           break;
       }
     });
 
-    // Remove all old flex directives
+    // Remove all old flex directives but PRESERVE other attributes
     let result = tagContent;
     Object.entries(directives).forEach(([key, data]) => {
-      if (key !== '_existingClass') {
+      if (!key.startsWith('_')) {
         result = result.replace(data.original, '');
       }
     });
 
-    // Remove existing class attribute
-    result = result.replace(/\s*class="[^"]*"/g, '');
+    // Handle class attribute carefully
+    if (directives._existingClassOriginal) {
+      // Remove the old class attribute
+      result = result.replace(directives._existingClassOriginal, '');
 
-    // Build new attributes
-    const newAttrs = [];
-    if (cssClasses.size > 0) {
-      const classesStr = Array.from(cssClasses).sort().join(' ');
-      newAttrs.push(`class="${classesStr}"`);
-    }
-    newAttrs.push(...directiveBindings);
+      // Build new class attribute by combining existing and new classes
+      if (directives._existingClass || newCssClasses.length > 0) {
+        const existingClass = directives._existingClass || '';
+        const newClassesStr = newCssClasses.join(' ');
 
-    // Insert new attributes
-    const tagMatch = /^<([a-zA-Z0-9\-]+)/.exec(result);
-    if (tagMatch) {
-      const tagName = tagMatch[1];
-      const insertionPoint = tagName.length + 1;
-      const attrsStr = newAttrs.length > 0 ? ' ' + newAttrs.join(' ') : '';
-      result = result.substring(0, insertionPoint) + attrsStr + result.substring(insertionPoint);
+        // Combine: preserve existing class with template expressions, append new classes
+        let combinedClass;
+        if (existingClass && newClassesStr) {
+          combinedClass = `class="${existingClass} ${newClassesStr}"`;
+        } else if (existingClass) {
+          combinedClass = `class="${existingClass}"`;
+        } else {
+          combinedClass = `class="${newClassesStr}"`;
+        }
+
+        // Insert the new class attribute at the start
+        const tagMatch = /^<([a-zA-Z0-9\-]+)/.exec(result);
+        if (tagMatch) {
+          const tagName = tagMatch[1];
+          const insertionPoint = tagName.length + 1;
+          result = result.substring(0, insertionPoint) + ' ' + combinedClass + result.substring(insertionPoint);
+        }
+      }
+    } else {
+      // No existing class attribute, just add new classes
+      if (newCssClasses.length > 0) {
+        const newClassAttr = `class="${newCssClasses.join(' ')}"`;
+        const tagMatch = /^<([a-zA-Z0-9\-]+)/.exec(result);
+        if (tagMatch) {
+          const tagName = tagMatch[1];
+          const insertionPoint = tagName.length + 1;
+          result = result.substring(0, insertionPoint) + ' ' + newClassAttr + result.substring(insertionPoint);
+        }
+      }
     }
+
+    // Add directive bindings after the class attribute if it exists, or after tag name
+    if (directiveBindings.length > 0) {
+      // Find where to insert - after class attribute or after tag name
+      const tagMatch = /^<([a-zA-Z0-9\-]+)(\s+class="[^"]*")?/.exec(result);
+      if (tagMatch) {
+        const tagName = tagMatch[1];
+        const classAttr = tagMatch[2] || '';
+        const insertionPoint = tagName.length + 1 + classAttr.length;
+        const attrsStr = ' ' + directiveBindings.join(' ');
+        result = result.substring(0, insertionPoint) + attrsStr + result.substring(insertionPoint);
+      }
+    }
+
+    // Clean up extra spaces
+    result = result.replace(/\s+/g, ' ').replace(/\s+>/g, '>').trim();
 
     this.totalReplacements++;
-    return result.trim();
+    return result;
   }
 
   /**
@@ -376,7 +447,9 @@ class FlexMigrator {
       const originalContent = content;
 
       // Find and replace all tags with flex directives
-      const pattern = /<([a-zA-Z0-9\-]+)([^>]*(?:fx|appFlex|appGap)[^>]*)>/g;
+      // More robust pattern that handles various tag structures
+      const pattern = /<([a-zA-Z0-9\-]+)([^>]*?\bfx(?:Layout|LayoutAlign|LayoutGap|Flex|FlexOrder|FlexOffset|FlexAlign|Show|Hide)[^>]*)>/g;
+
       const newContent = content.replace(pattern, (match) => {
         const migrated = this.migrateTag(match);
         if (this.verbose && match !== migrated) {

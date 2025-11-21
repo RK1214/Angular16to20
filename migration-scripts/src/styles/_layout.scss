@@ -1,0 +1,155 @@
+// ===================================
+// CSS Layout Utilities
+// Replacement for Angular Flex Layout
+// ===================================
+
+// Basic flex containers
+.flex-row { display: flex; flex-direction: row; }
+.flex-column { display: flex; flex-direction: column; }
+.flex-row-reverse { display: flex; flex-direction: row-reverse; }
+.flex-column-reverse { display: flex; flex-direction: column-reverse; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+
+// Alignment utilities
+.align-start-start { display: flex; justify-content: flex-start; align-items: flex-start; }
+.align-start-center { display: flex; justify-content: flex-start; align-items: center; }
+.align-start-end { display: flex; justify-content: flex-start; align-items: flex-end; }
+.align-center-start { display: flex; justify-content: center; align-items: flex-start; }
+.align-center-center { display: flex; justify-content: center; align-items: center; }
+.align-center-end { display: flex; justify-content: center; align-items: flex-end; }
+.align-end-start { display: flex; justify-content: flex-end; align-items: flex-start; }
+.align-end-center { display: flex; justify-content: flex-end; align-items: center; }
+.align-end-end { display: flex; justify-content: flex-end; align-items: flex-end; }
+.align-space-between-start { display: flex; justify-content: space-between; align-items: flex-start; }
+.align-space-between-center { display: flex; justify-content: space-between; align-items: center; }
+.align-space-between-end { display: flex; justify-content: space-between; align-items: flex-end; }
+.align-space-around-center { display: flex; justify-content: space-around; align-items: center; }
+.align-space-evenly-center { display: flex; justify-content: space-evenly; align-items: center; }
+
+// Gap utilities
+.gap-4 { gap: 4px; }
+.gap-5 { gap: 5px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.gap-20 { gap: 20px; }
+.gap-24 { gap: 24px; }
+.gap-32 { gap: 32px; }
+.gap-48 { gap: 48px; }
+
+// Flex sizing
+.flex-auto { flex: 1 1 auto; }
+.flex-none { flex: 0 0 auto; }
+.flex-initial { flex: 0 1 auto; }
+.flex-nogrow { flex: 0 1 auto; }
+.flex-noshrink { flex: 1 0 auto; }
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+.flex-3 { flex: 3; }
+
+// Percentage flex
+.flex-10 { flex: 0 0 10%; max-width: 10%; }
+.flex-20 { flex: 0 0 20%; max-width: 20%; }
+.flex-25 { flex: 0 0 25%; max-width: 25%; }
+.flex-30 { flex: 0 0 30%; max-width: 30%; }
+.flex-33 { flex: 0 0 33.333%; max-width: 33.333%; }
+.flex-40 { flex: 0 0 40%; max-width: 40%; }
+.flex-50 { flex: 0 0 50%; max-width: 50%; }
+.flex-60 { flex: 0 0 60%; max-width: 60%; }
+.flex-66 { flex: 0 0 66.666%; max-width: 66.666%; }
+.flex-70 { flex: 0 0 70%; max-width: 70%; }
+.flex-75 { flex: 0 0 75%; max-width: 75%; }
+.flex-80 { flex: 0 0 80%; max-width: 80%; }
+.flex-90 { flex: 0 0 90%; max-width: 90%; }
+.flex-100 { flex: 0 0 100%; max-width: 100%; }
+
+// Fixed width flex
+.flex-20px { flex: 0 0 20px; max-width: 20px; }
+.flex-30px { flex: 0 0 30px; max-width: 30px; }
+.flex-40px { flex: 0 0 40px; max-width: 40px; }
+.flex-50px { flex: 0 0 50px; max-width: 50px; }
+.flex-100px { flex: 0 0 100px; max-width: 100px; }
+.flex-142px { flex: 0 0 142px; max-width: 142px; }
+.flex-150px { flex: 0 0 150px; max-width: 150px; }
+.flex-200px { flex: 0 0 200px; max-width: 200px; }
+.flex-220px { flex: 0 0 220px; max-width: 220px; }
+.flex-250px { flex: 0 0 250px; max-width: 250px; }
+.flex-300px { flex: 0 0 300px; max-width: 300px; }
+.flex-400px { flex: 0 0 400px; max-width: 400px; }
+.flex-500px { flex: 0 0 500px; max-width: 500px; }
+
+// Order utilities
+.order-1 { order: 1; }
+.order-2 { order: 2; }
+.order-3 { order: 3; }
+.order-4 { order: 4; }
+
+// Width/height utilities
+.w-full { width: 100%; }
+.w-auto { width: auto; }
+.h-full { height: 100%; }
+.h-auto { height: auto; }
+
+// ===================================
+// Responsive Breakpoints
+// ===================================
+
+// XS: < 600px
+@media (max-width: 599px) {
+  .flex-column-xs { flex-direction: column !important; }
+  .flex-row-xs { flex-direction: row !important; }
+  .show-xs { display: flex !important; }
+  .hide-xs { display: none !important; }
+  .flex-100-xs { flex: 0 0 100% !important; max-width: 100% !important; }
+  .flex-1-xs { flex: 1 !important; }
+  .order-1-xs { order: 1; }
+  .order-2-xs { order: 2; }
+}
+
+// SM: 600px - 959px
+@media (min-width: 600px) and (max-width: 959px) {
+  .flex-column-sm { flex-direction: column !important; }
+  .flex-row-sm { flex-direction: row !important; }
+  .show-sm { display: flex !important; }
+  .hide-sm { display: none !important; }
+  .flex-100-sm { flex: 0 0 100% !important; max-width: 100% !important; }
+}
+
+// MD: 960px - 1279px
+@media (min-width: 960px) and (max-width: 1279px) {
+  .flex-column-md { flex-direction: column !important; }
+  .show-md { display: flex !important; }
+  .hide-md { display: none !important; }
+}
+
+// LG: >= 1280px
+@media (min-width: 1280px) {
+  .show-lg { display: flex !important; }
+  .hide-lg { display: none !important; }
+}
+
+// GT-XS: >= 600px
+@media (min-width: 600px) {
+  .show-gt-xs { display: flex !important; }
+  .hide-gt-xs { display: none !important; }
+  .gap-24-gt-xs { gap: 24px; }
+}
+
+// GT-SM: >= 960px
+@media (min-width: 960px) {
+  .show-gt-sm { display: flex !important; }
+  .hide-gt-sm { display: none !important; }
+}
+
+// LT-SM: < 600px
+@media (max-width: 599px) {
+  .show-lt-sm { display: flex !important; }
+  .hide-lt-sm { display: none !important; }
+}
+
+// LT-MD: < 960px
+@media (max-width: 959px) {
+  .show-lt-md { display: flex !important; }
+  .hide-lt-md { display: none !important; }
+}
