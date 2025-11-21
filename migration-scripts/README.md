@@ -19,6 +19,9 @@ These scripts automate the complete migration process:
 - Git repository initialized
 - Angular 16.x project
 - Bash shell (macOS, Linux, WSL, Git Bash)
+- Python 3.x (for robust Phase 2 migration - recommended)
+
+**Windows Users:** See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for detailed setup instructions
 
 ## Quick Start
 

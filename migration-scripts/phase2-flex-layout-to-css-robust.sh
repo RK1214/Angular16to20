@@ -36,13 +36,46 @@ print_error() { echo -e "${RED}✗ $1${NC}"; }
 print_warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
 print_info() { echo -e "${BLUE}ℹ $1${NC}"; }
 
-# Check Python 3
-if ! command -v python3 &> /dev/null; then
-    print_error "Python 3 is required but not installed. Please install Python 3 and try again."
+# Check Python 3 (handle both python3 and python commands)
+PYTHON_CMD=""
+
+# Try python3 first (Linux/macOS)
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+    print_success "Python 3 found (python3)"
+# Try python command (Windows)
+elif command -v python &> /dev/null; then
+    # Check if it's Python 3
+    PYTHON_VERSION=$(python --version 2>&1 | grep -oP '(?<=Python )\d+' | head -1)
+    if [ "$PYTHON_VERSION" -ge 3 ]; then
+        PYTHON_CMD="python"
+        print_success "Python 3 found (python)"
+    else
+        print_error "Python 3 is required, but found Python 2.x"
+        print_info "Please install Python 3 from https://www.python.org/downloads/"
+        print_info "Make sure to check 'Add Python to PATH' during installation"
+        exit 1
+    fi
+else
+    print_error "Python is not installed or not in PATH"
+    print_info ""
+    print_info "Windows users:"
+    print_info "  1. Download Python 3 from: https://www.python.org/downloads/"
+    print_info "  2. Run installer and CHECK 'Add Python to PATH'"
+    print_info "  3. Restart Git Bash/terminal"
+    print_info "  4. Run this script again"
+    print_info ""
+    print_info "macOS users:"
+    print_info "  brew install python3"
+    print_info ""
+    print_info "Linux users:"
+    print_info "  sudo apt install python3  # Debian/Ubuntu"
+    print_info "  sudo yum install python3  # RHEL/CentOS"
+    print_info ""
+    print_info "Alternative: Use the original Phase 2 script (no Python required):"
+    print_info "  ./migration-scripts/phase2-flex-layout-to-css.sh"
     exit 1
 fi
-
-print_success "Python 3 found"
 
 # Check if Phase 1 was completed
 if [ ! -f "MIGRATION_INVENTORY.md" ]; then
@@ -86,7 +119,7 @@ fi
 print_info "Running Python-based flex migrator..."
 echo ""
 
-if python3 migration-scripts/migrate-flex-to-css.py --src-dir src $DRY_RUN_FLAG --verbose; then
+if $PYTHON_CMD migration-scripts/migrate-flex-to-css.py --src-dir src $DRY_RUN_FLAG --verbose; then
     print_success "Python migration completed"
 else
     print_error "Python migration failed"

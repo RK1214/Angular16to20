@@ -2,6 +2,8 @@
 
 Simple guide to running the Angular 16→20 migration bash scripts.
 
+> **Windows Users:** Having trouble with Python? See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for complete Windows setup guide!
+
 ## Quick Start (3 Steps)
 
 ### Step 1: Open Terminal in Your Project
@@ -279,14 +281,54 @@ npm install
 
 ---
 
-### Issue: "command not found: python3"
+### Issue: "command not found: python3" or "python was not found"
 
 **Error:**
 ```
 ./migration-scripts/phase2-flex-layout-to-css-robust.sh: line 25: python3: command not found
 ```
+OR
+```
+Python was not found; run without arguments to install from the Microsoft Store
+```
 
 **Solution:**
+
+**For Windows (Most Common Issue):**
+
+The script now automatically detects both `python` and `python3` commands!
+
+If Python is installed but not working:
+
+1. **Check if Python is in PATH:**
+   ```bash
+   # Try both commands:
+   python --version
+   python3 --version
+   ```
+
+2. **If neither works, Python is not in PATH. To fix:**
+   - **Option A: Reinstall Python**
+     1. Download from: https://www.python.org/downloads/
+     2. Run installer
+     3. ⚠️ **IMPORTANT:** Check ✅ "Add Python to PATH"
+     4. Complete installation
+     5. **Restart Git Bash** (important!)
+     6. Test: `python --version`
+
+   - **Option B: Add existing Python to PATH manually**
+     1. Find Python location (usually `C:\Python3X` or `C:\Users\YourName\AppData\Local\Programs\Python\Python3X`)
+     2. Add to PATH:
+        - Right-click "This PC" → Properties
+        - Advanced system settings → Environment Variables
+        - Edit "Path" → Add Python directory
+        - Add Python Scripts directory (e.g., `C:\Python3X\Scripts`)
+     3. **Restart Git Bash**
+     4. Test: `python --version`
+
+3. **Microsoft Store Python (Not Recommended):**
+   If you installed Python from Microsoft Store, it may not work properly with Git Bash.
+   Uninstall it and use the official installer from python.org instead.
 
 **For macOS/Linux:**
 ```bash
@@ -304,14 +346,16 @@ sudo apt update && sudo apt install python3
 ./migration-scripts/phase2-flex-layout-to-css-robust.sh
 ```
 
-**For Windows:**
+**Quick Test:**
 ```bash
-# Download Python from: https://www.python.org/downloads/
-# Install it and make sure to check "Add Python to PATH"
-# Then restart Git Bash and try again
+# The script will now work with either command:
+python --version   # Windows usually uses this
+python3 --version  # Linux/macOS usually uses this
+
+# If either shows "Python 3.x.x", you're good!
 ```
 
-**Alternative:** Use the original Phase 2 script if Python 3 is not available:
+**Still not working?** Use the original Phase 2 script (no Python required):
 ```bash
 ./migration-scripts/phase2-flex-layout-to-css.sh
 ```
