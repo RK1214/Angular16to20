@@ -14,6 +14,11 @@
 # - Removes FlexLayoutModule from imports
 # - Uninstalls @angular/flex-layout package
 # - Tests the build
+#
+# IMPORTANT:
+# - No backup files are created (use git for rollback)
+# - No automatic commits (you control when to commit)
+# - Review changes with 'git diff' before committing
 ################################################################################
 
 set -e  # Exit on error
@@ -220,9 +225,7 @@ REMOVED_COUNT=0
 
 for file in $TS_MODULE_FILES; do
     if grep -q "FlexLayoutModule" "$file"; then
-        cp "$file" "$file.backup"
-
-        # Remove import line
+        # Remove import line (no backup created)
         sed -i.tmp '/import.*FlexLayoutModule.*from.*@angular\/flex-layout/d' "$file"
 
         # Remove from imports array (handle both trailing comma and no comma)
@@ -279,57 +282,8 @@ if npm run build; then
     print_success "Build successful!"
 else
     print_error "Build failed. Please check the errors above."
-    print_warning "You can restore backups from .backup files if needed"
+    print_warning "Review the changes and fix any errors"
     exit 1
-fi
-
-# Step 9: Cleanup backup files (optional)
-print_info "Found backup files:"
-BACKUP_COUNT=$(find src -name "*.backup" 2>/dev/null | wc -l | xargs)
-echo "  $BACKUP_COUNT backup files"
-
-if [ "$BACKUP_COUNT" -gt 0 ]; then
-    read -p "Delete backup files? (y/n) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        find src -name "*.backup" -delete
-        print_success "Backup files deleted"
-    else
-        print_info "Keeping backup files for manual review"
-    fi
-fi
-
-# Step 10: Commit changes
-print_info "Committing Phase 2 changes..."
-
-git add -A
-
-if git diff --cached --quiet; then
-    print_warning "No changes to commit"
-else
-    git commit -m "Phase 2: Migrated Angular Flex Layout to CSS (Node.js)
-
-- Created src/styles/_layout.scss with comprehensive CSS utilities
-- Created TypeScript directives for dynamic bindings:
-  * FlexDirective ([appFlex])
-  * GapDirective ([appGap])
-  * LayoutDirective ([appLayout])
-  * LayoutAlignDirective ([appLayoutAlign])
-  * FlexOrderDirective ([appFlexOrder])
-- Migrated all HTML files using Node.js-based robust migrator:
-  * Properly merged CSS classes (no duplicate class attributes)
-  * Handled static flex directives → CSS classes
-  * Handled dynamic flex directives → custom directives
-  * Handled responsive breakpoints (.xs, .sm, .gt-xs, etc.)
-  * Handled calc() expressions and template bindings
-  * Preserved HTML structure
-- Created SharedModule for flex directives
-- Removed FlexLayoutModule from all modules
-- Uninstalled @angular/flex-layout package
-- Build successful
-
-🤖 Generated with Claude Code
-Co-Authored-By: Claude <noreply@anthropic.com>" || print_warning "Commit failed"
 fi
 
 # Summary
@@ -348,8 +302,11 @@ print_success "✓ @angular/flex-layout uninstalled"
 print_success "✓ Build tested successfully"
 print_success "✓ No Python required!"
 echo ""
-print_info "Important: If you use dynamic directives ([appFlex], [appGap], etc.),"
-print_info "make sure to import SharedModule in your feature modules!"
+print_info "Important:"
+print_info "1. Review the changes with: git diff"
+print_info "2. If you use dynamic directives ([appFlex], [appGap], etc.),"
+print_info "   make sure to import SharedModule in your feature modules"
+print_info "3. Commit the changes when ready: git add . && git commit -m 'Phase 2: Flex migration'"
 echo ""
 print_info "Next step: Run phase3-material-legacy-to-mdc.sh"
 echo ""

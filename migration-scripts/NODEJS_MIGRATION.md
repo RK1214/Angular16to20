@@ -49,6 +49,7 @@ The Node.js migration script automatically:
    - Converts dynamic bindings to custom directives
    - Properly merges class attributes (no duplicates!)
    - Preserves HTML structure
+   - **No backup files created** - Use git for rollback if needed
 
 3. ✅ **Creates TypeScript directives**
    - `[appFlex]` - For dynamic flex values
@@ -62,6 +63,8 @@ The Node.js migration script automatically:
    - Uninstalls @angular/flex-layout package
 
 5. ✅ **Tests build** - Ensures everything compiles
+
+6. ✅ **Lets you review** - No automatic commits, you control when to commit
 
 ## Example Migration
 
@@ -176,7 +179,18 @@ Options:
 
 ## After Migration
 
-### 1. Import SharedModule (if using dynamic directives)
+### 1. Review Changes
+
+```bash
+# See what was changed
+git diff
+
+# Check specific files
+git diff src/styles/_layout.scss
+git diff src/app/shared/
+```
+
+### 2. Import SharedModule (if using dynamic directives)
 
 ```typescript
 // feature.module.ts
@@ -192,7 +206,7 @@ import { SharedModule } from '../shared/shared.module';
 export class FeatureModule { }
 ```
 
-### 2. Test Thoroughly
+### 3. Test Thoroughly
 
 ```bash
 npm run build
@@ -204,6 +218,23 @@ Check:
 - ✅ Responsive breakpoints work
 - ✅ Dynamic bindings function properly
 - ✅ No console errors
+
+### 4. Commit When Ready
+
+```bash
+# Stage all changes
+git add .
+
+# Commit with descriptive message
+git commit -m "Phase 2: Migrate Angular Flex Layout to CSS
+
+- Converted flex directives to CSS classes
+- Created custom directives for dynamic bindings
+- Removed @angular/flex-layout dependency
+- Generated comprehensive layout utilities"
+```
+
+**Note:** The script doesn't create backup files or auto-commit. This gives you full control to review changes before committing.
 
 ## Troubleshooting
 
@@ -229,6 +260,32 @@ npm install glob
 1. Check that SharedModule is imported in modules using dynamic directives
 2. Verify _layout.scss is imported in styles.scss
 3. Check browser console for runtime errors
+
+### Issue: Need to rollback changes
+
+**Solution:**
+
+Since no backup files are created, use git to rollback:
+
+```bash
+# See what changed
+git status
+git diff
+
+# Discard all changes (if not committed)
+git checkout .
+
+# Or discard specific file
+git checkout src/path/to/file.html
+
+# If already committed, revert the commit
+git revert HEAD
+
+# Or reset to previous commit (careful!)
+git reset --hard HEAD~1
+```
+
+**Best practice:** Always commit your work before running the migration, so you can easily revert if needed.
 
 ## Comparison: Node.js vs Python vs Bash
 

@@ -180,6 +180,15 @@ Generate in `src/app/shared/`:
 - Update styles.scss
 - Test build
 
+### 5. Review and Commit (Node.js)
+
+**Node.js version doesn't auto-commit:**
+- No backup files created (use git for rollback)
+- No automatic commits
+- You review changes and commit when ready
+
+This gives you full control!
+
 ---
 
 ## Decision Guide

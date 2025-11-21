@@ -4,6 +4,11 @@
  * Robust Angular Flex Layout to CSS Migration Script (Node.js version)
  * Handles all flex directive patterns including dynamic bindings, responsive breakpoints,
  * and complex scenarios.
+ *
+ * IMPORTANT:
+ * - No backup files are created (use git for rollback)
+ * - Changes are applied directly to files
+ * - Use dry-run mode (--dry-run) to preview changes first
  */
 
 const fs = require('fs');
@@ -383,9 +388,7 @@ class FlexMigrator {
 
       if (newContent !== originalContent) {
         if (!this.dryRun) {
-          // Create backup
-          fs.writeFileSync(filePath + '.backup', originalContent, 'utf-8');
-          // Write migrated content
+          // Write migrated content (no backup files created)
           fs.writeFileSync(filePath, newContent, 'utf-8');
           this.log(`Migrated: ${filePath}`, 'success');
         } else {
