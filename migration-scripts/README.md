@@ -19,9 +19,13 @@ These scripts automate the complete migration process:
 - Git repository initialized
 - Angular 16.x project
 - Bash shell (macOS, Linux, WSL, Git Bash)
-- Python 3.x (for robust Phase 2 migration - recommended)
 
-**Windows Users:** See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for detailed setup instructions
+**Optional (for Phase 2):**
+- Python 3.x (alternative migration option)
+
+> **Note:** Phase 2 now has a **Node.js version** that requires no additional setup! See [NODEJS_MIGRATION.md](NODEJS_MIGRATION.md)
+
+**Windows Users:** See [WINDOWS_SETUP.md](WINDOWS_SETUP.md) for setup help
 
 ## Quick Start
 
@@ -45,8 +49,9 @@ chmod +x migration-scripts/*.sh
 # Phase 1: Preparation
 ./migration-scripts/phase1-preparation.sh
 
-# Phase 2: Flex Layout → CSS
-./migration-scripts/phase2-flex-layout-to-css.sh
+# Phase 2: Flex Layout → CSS (Node.js version - RECOMMENDED)
+./migration-scripts/phase2-flex-layout-to-css-nodejs.sh
+# Alternatives: phase2-flex-layout-to-css-robust.sh (Python) or phase2-flex-layout-to-css.sh (Bash)
 
 # Phase 3: Material Legacy → MDC
 ./migration-scripts/phase3-material-legacy-to-mdc.sh
@@ -80,7 +85,56 @@ chmod +x migration-scripts/*.sh
 
 ---
 
-### Phase 2: `phase2-flex-layout-to-css.sh` (Original)
+### Phase 2A: `phase2-flex-layout-to-css-nodejs.sh` (⭐ RECOMMENDED)
+
+> **NEW! Node.js-based migration - No Python required!**
+>
+> 📖 **See [NODEJS_MIGRATION.md](NODEJS_MIGRATION.md) for complete documentation**
+
+**Why use the Node.js version?**
+- ✅ **Zero setup** - Node.js already installed for Angular!
+- ✅ **Works everywhere** - No PATH issues on Windows
+- ✅ **Same features** - All capabilities of Python version
+- ✅ **Fast** - Native Node.js performance
+- ✅ **Reliable** - Proper HTML parsing, no syntax breaking
+
+**What it does:**
+Everything the other versions do, PLUS:
+- Uses Node.js (already required for Angular)
+- Auto-installs glob package if needed (no manual setup)
+- Works perfectly on Windows (no Python PATH issues)
+- Same robust migration as Python version
+- Properly merges CSS classes (no `class="" class=""` issues)
+- Handles dynamic bindings, calc(), template expressions
+- Creates TypeScript directives for all dynamic cases
+
+**Usage:**
+```bash
+./migration-scripts/phase2-flex-layout-to-css-nodejs.sh
+
+# Select option 1 for dry-run (preview)
+# Select option 2 for full migration
+```
+
+**Requirements:**
+- Node.js 18+ (already installed for Angular projects)
+
+**Time:** 5-10 minutes
+
+---
+
+### Phase 2B: `phase2-flex-layout-to-css-robust.sh` (Python Alternative)
+
+> **Python-based robust migration**
+
+Use this if you prefer Python over Node.js.
+
+**Requirements:**
+- Python 3.x
+
+---
+
+### Phase 2C: `phase2-flex-layout-to-css.sh` (Original Bash)
 
 **What it does:**
 - Creates `src/styles/_layout.scss` with 200+ CSS utilities

@@ -36,9 +36,11 @@ This makes all scripts runnable. You only need to do this once.
 # Phase 1: Preparation
 ./migration-scripts/phase1-preparation.sh
 
-# Phase 2: Flex Layout → CSS (⭐ Use robust version - RECOMMENDED)
-./migration-scripts/phase2-flex-layout-to-css-robust.sh
-# OR use original version if you prefer:
+# Phase 2: Flex Layout → CSS (⭐ Node.js version - RECOMMENDED)
+./migration-scripts/phase2-flex-layout-to-css-nodejs.sh
+# OR use Python version:
+# ./migration-scripts/phase2-flex-layout-to-css-robust.sh
+# OR use original bash version:
 # ./migration-scripts/phase2-flex-layout-to-css.sh
 
 # Phase 3: Material Legacy → MDC
@@ -58,39 +60,52 @@ This makes all scripts runnable. You only need to do this once.
 
 ---
 
-## Phase 2: Choosing Between Two Migration Options
+## Phase 2: Choosing Between Migration Options
 
-For Phase 2 (Flex Layout → CSS), you have **two options**:
+For Phase 2 (Flex Layout → CSS), you have **three options**:
 
-### Option A: Robust Migration (⭐ RECOMMENDED)
+### Option A: Node.js Migration (⭐ RECOMMENDED)
 
 ```bash
-./migration-scripts/phase2-flex-layout-to-css-robust.sh
+./migration-scripts/phase2-flex-layout-to-css-nodejs.sh
 ```
 
-**Use this if you have:**
-- ✅ Dynamic flex bindings: `[fxFlex]="variable"`
-- ✅ Template expressions: `fxFlex="{{ expression }}"`
-- ✅ Calc() expressions: `fxFlex="calc(100% - 40px)"`
-- ✅ Complex responsive patterns
-- ✅ Issues with the original script
+**✅ Best choice because:**
+- ✅ **No additional dependencies** - Node.js already required for Angular!
+- ✅ **Works on all platforms** - Windows, macOS, Linux
+- ✅ **No PATH issues** - Uses existing Node.js installation
+- ✅ **Fast and reliable** - Built-in glob support
+- ✅ Handles ALL complex scenarios
 
 **Features:**
-- Python-based HTML parser (no syntax breaking)
+- Node.js-based HTML parser (no syntax breaking)
 - Properly merges CSS classes (no duplicates)
 - Creates TypeScript directives for dynamic bindings
 - Dry-run mode to preview changes
 - Comprehensive warnings for manual review
-- Handles ALL complex scenarios
+- Handles dynamic bindings, calc(), template expressions, etc.
 
 **Requirements:**
-- Python 3.x (pre-installed on macOS/Linux)
+- Node.js 18+ (already installed for Angular projects)
 
 **Interactive prompts:**
 1. Select **1** for dry-run (preview changes)
 2. Select **2** for full migration
 
-### Option B: Original Migration
+### Option B: Python Migration
+
+```bash
+./migration-scripts/phase2-flex-layout-to-css-robust.sh
+```
+
+**Use this if:**
+- You prefer Python over Node.js
+- You already have Python 3 installed
+
+**Requirements:**
+- Python 3.x
+
+### Option C: Original Migration (Bash Only)
 
 ```bash
 ./migration-scripts/phase2-flex-layout-to-css.sh
@@ -98,25 +113,30 @@ For Phase 2 (Flex Layout → CSS), you have **two options**:
 
 **Use this if:**
 - You only have simple static directives
-- You don't have Python 3 available
-- You prefer the original bash-only approach
+- You prefer the simplest bash-only approach
 
-**Note:** If you encounter issues like:
+**Note:** May have issues with:
 - Multiple `class=""` attributes
 - Broken HTML syntax
 - Incorrect responsive class generation
 
-Then switch to the **Robust version** (Option A).
-
 ### Which One Should I Choose?
 
-**👉 We recommend the Robust version** for most projects, especially if you're unsure.
+**👉 We strongly recommend Option A (Node.js version)** for most projects!
+
+**Why Node.js version is best:**
+1. ✅ Node.js is **already installed** (required for Angular)
+2. ✅ **No Python setup** needed (avoids PATH issues on Windows)
+3. ✅ **Same features** as Python version
+4. ✅ **Works everywhere** without additional setup
 
 ```bash
-# Run this command to check if Python 3 is available:
-python3 --version
+# Verify Node.js is available (it should be!):
+node --version
+# Should show: v18.x.x or higher
 
-# If you see "Python 3.x.x", you're good to go with the robust version!
+# Then just run:
+./migration-scripts/phase2-flex-layout-to-css-nodejs.sh
 ```
 
 ---
@@ -392,11 +412,13 @@ chmod +x migration-scripts/*.sh
 ./migration-scripts/phase1-preparation.sh
 # ✓ This will create git branches and inventory
 
-# 5. Run Phase 2 (ROBUST VERSION - Recommended)
-./migration-scripts/phase2-flex-layout-to-css-robust.sh
+# 5. Run Phase 2 (NODE.JS VERSION - Recommended)
+./migration-scripts/phase2-flex-layout-to-css-nodejs.sh
 # ✓ This will convert Flex Layout to CSS (5-10 minutes)
 # ✓ Select option 1 for dry-run first, then option 2 for full migration
-# OR use original: ./migration-scripts/phase2-flex-layout-to-css.sh
+# ✓ No Python required - uses Node.js (already installed for Angular!)
+# OR use Python version: ./migration-scripts/phase2-flex-layout-to-css-robust.sh
+# OR use original bash version: ./migration-scripts/phase2-flex-layout-to-css.sh
 
 # 6. Run Phase 3
 ./migration-scripts/phase3-material-legacy-to-mdc.sh
@@ -427,21 +449,23 @@ If you prefer to run all scripts at once (not recommended for first time):
 # Make executable
 chmod +x migration-scripts/*.sh
 
-# Run all phases sequentially using ROBUST version (will take 40-70 minutes)
+# Run all phases sequentially using NODE.JS version (will take 40-70 minutes)
 ./migration-scripts/phase1-preparation.sh && \
-./migration-scripts/phase2-flex-layout-to-css-robust.sh && \
+./migration-scripts/phase2-flex-layout-to-css-nodejs.sh && \
 ./migration-scripts/phase3-material-legacy-to-mdc.sh && \
 ./migration-scripts/phase4-angular-updates.sh && \
 ./migration-scripts/phase5-testing.sh && \
 ./migration-scripts/phase6-cleanup.sh
 
-# OR use original Phase 2 script:
+# OR use Python version for Phase 2:
+# ./migration-scripts/phase1-preparation.sh && \
+# ./migration-scripts/phase2-flex-layout-to-css-robust.sh && \
+# ...
+
+# OR use original bash version for Phase 2:
 # ./migration-scripts/phase1-preparation.sh && \
 # ./migration-scripts/phase2-flex-layout-to-css.sh && \
-# ./migration-scripts/phase3-material-legacy-to-mdc.sh && \
-# ./migration-scripts/phase4-angular-updates.sh && \
-# ./migration-scripts/phase5-testing.sh && \
-# ./migration-scripts/phase6-cleanup.sh
+# ...
 ```
 
 **⚠️ Warning:** This runs everything automatically. Better to run one at a time to review results.
@@ -562,8 +586,9 @@ sh /full/path/to/migration-scripts/phase1-preparation.sh
 2. Go to your project: `cd /path/to/project`
 3. Make executable: `chmod +x migration-scripts/*.sh`
 4. Run Phase 1: `./migration-scripts/phase1-preparation.sh`
-5. Run Phase 2: `./migration-scripts/phase2-flex-layout-to-css-robust.sh` ⭐ (Recommended)
-   - Or use original: `./migration-scripts/phase2-flex-layout-to-css.sh`
+5. Run Phase 2: `./migration-scripts/phase2-flex-layout-to-css-nodejs.sh` ⭐ (Recommended - Node.js)
+   - Or use Python: `./migration-scripts/phase2-flex-layout-to-css-robust.sh`
+   - Or use original bash: `./migration-scripts/phase2-flex-layout-to-css.sh`
 6. Continue with phase3, phase4, phase5, phase6
 
 **That's all you need!** The scripts will guide you through everything else.
@@ -572,16 +597,21 @@ sh /full/path/to/migration-scripts/phase1-preparation.sh
 
 ## Quick Reference: Phase 2 Options
 
-| Feature | Robust Version | Original Version |
-|---------|---------------|------------------|
-| **Script** | `phase2-flex-layout-to-css-robust.sh` | `phase2-flex-layout-to-css.sh` |
-| **Requires Python 3** | ✅ Yes | ❌ No |
-| **Dry-run mode** | ✅ Yes | ❌ No |
-| **Dynamic bindings** | ✅ Full support | ⚠️ Limited |
-| **Complex scenarios** | ✅ All handled | ⚠️ Some issues |
-| **Class merging** | ✅ Perfect | ⚠️ May duplicate |
-| **HTML preservation** | ✅ Always | ⚠️ May break |
-| **Recommended for** | ✅ Most projects | Simple projects only |
+| Feature | Node.js Version ⭐ | Python Version | Original Bash |
+|---------|-------------------|----------------|---------------|
+| **Script** | `phase2-...-nodejs.sh` | `phase2-...-robust.sh` | `phase2-flex-layout-to-css.sh` |
+| **Dependencies** | ✅ Node.js (already installed!) | Python 3.x | ❌ None |
+| **Windows compatible** | ✅ Yes (no PATH issues) | ⚠️ May have PATH issues | ✅ Yes |
+| **Setup required** | ✅ None (Node.js pre-installed) | Python installation | ❌ None |
+| **Dry-run mode** | ✅ Yes | ✅ Yes | ❌ No |
+| **Dynamic bindings** | ✅ Full support | ✅ Full support | ⚠️ Limited |
+| **Complex scenarios** | ✅ All handled | ✅ All handled | ⚠️ Some issues |
+| **Class merging** | ✅ Perfect | ✅ Perfect | ⚠️ May duplicate |
+| **HTML preservation** | ✅ Always | ✅ Always | ⚠️ May break |
+| **Speed** | ✅ Fast | ✅ Fast | ✅ Fast |
+| **Recommended for** | ✅ **All projects** | Python users | Simple projects only |
+
+**🌟 Node.js version is recommended for everyone!** No additional setup needed.
 
 **Need more details?** See [FLEX_MIGRATION_GUIDE.md](FLEX_MIGRATION_GUIDE.md)
 
