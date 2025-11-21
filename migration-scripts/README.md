@@ -77,7 +77,7 @@ chmod +x migration-scripts/*.sh
 
 ---
 
-### Phase 2: `phase2-flex-layout-to-css.sh`
+### Phase 2: `phase2-flex-layout-to-css.sh` (Original)
 
 **What it does:**
 - Creates `src/styles/_layout.scss` with 200+ CSS utilities
@@ -108,6 +108,86 @@ chmod +x migration-scripts/*.sh
 - Build verification
 
 **Time:** 5-10 minutes
+
+---
+
+### Phase 2: `phase2-flex-layout-to-css-robust.sh` (⭐ RECOMMENDED)
+
+> **NEW! Python-based robust migration that fixes all known issues**
+>
+> 📖 **See [FLEX_MIGRATION_GUIDE.md](FLEX_MIGRATION_GUIDE.md) for complete documentation**
+
+**Why use the robust version?**
+- ✅ **No duplicate class attributes** - Properly merges all classes into single attribute
+- ✅ **No HTML syntax breaking** - Uses proper HTML parsing
+- ✅ **Handles complex scenarios** - Template expressions, calc(), dynamic bindings
+- ✅ **Responsive breakpoints** - Correctly handles `.xs`, `.sm`, `.gt-xs`, etc.
+- ✅ **Dynamic directives** - Creates TypeScript directives for `[fxFlex]`, `[fxLayoutGap]`, etc.
+- ✅ **Comprehensive warnings** - Identifies edge cases for manual review
+
+**What it does:**
+Everything the original does, PLUS:
+- Uses Python-based HTML parser (no regex!)
+- Properly merges CSS classes (no `class="" class=""` issues)
+- Handles dynamic bindings: `[fxFlex]="width"` → `[appFlex]="width"`
+- Handles template expressions: `fxFlex="{{ expr }}"` → `[appFlex]="expr"`
+- Handles calc() expressions: `fxFlex="calc(100% - 40px)"`
+- Handles fxFlexOrder with breakpoints: `fxFlexOrder="2" fxFlexOrder.xs="1"`
+- Creates TypeScript directives for all dynamic cases
+- Creates SharedModule with all directives
+- Provides detailed warnings for manual review
+- Supports dry-run mode to preview changes
+
+**Usage:**
+```bash
+# Run the robust version (RECOMMENDED)
+./migration-scripts/phase2-flex-layout-to-css-robust.sh
+
+# Select option 1 for dry-run (preview)
+# Select option 2 for full migration
+```
+
+**Requirements:**
+- Python 3.x (pre-installed on macOS/Linux)
+
+**Generated Files:**
+- `src/styles/_layout.scss` - Comprehensive CSS utilities
+- `src/app/shared/directives/flex.directive.ts` - 5 custom directives
+- `src/app/shared/utils/flex.utils.ts` - Utility functions
+- `src/app/shared/shared.module.ts` - Module exporting directives
+
+**Directives Created:**
+- `[appFlex]` - Replaces dynamic `[fxFlex]`
+- `[appGap]` - Replaces dynamic `[fxLayoutGap]`
+- `[appLayout]` - Replaces dynamic `[fxLayout]`
+- `[appLayoutAlign]` - Replaces dynamic `[fxLayoutAlign]`
+- `[appFlexOrder]` - Replaces dynamic `[fxFlexOrder]`
+
+**Output:**
+- All features of original script
+- Plus: TypeScript directives for dynamic bindings
+- Plus: Proper class merging (no duplicates)
+- Plus: Preserved HTML structure
+- Plus: Comprehensive migration warnings
+
+**Time:** 5-10 minutes
+
+**Known Issues Fixed:**
+1. ❌ `class="flex-1".xs` → ✅ `class="flex-1 flex-100-xs"`
+2. ❌ Multiple `class=""` attributes → ✅ Single merged `class=""`
+3. ❌ HTML syntax breaking → ✅ Always valid HTML
+4. ❌ Unsupported scenarios → ✅ All scenarios covered
+
+**When to use original vs robust:**
+- ✅ **Use Robust** if your project has:
+  - Dynamic flex bindings: `[fxFlex]="variable"`
+  - Template expressions: `fxFlex="{{ expr }}"`
+  - Calc() expressions: `fxFlex="calc(...)"`
+  - Complex responsive patterns
+  - Issues with the original script
+- Use Original if:
+  - You only use simple static directives
+  - You don't have Python 3 available
 
 ---
 

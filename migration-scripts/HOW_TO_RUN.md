@@ -34,8 +34,10 @@ This makes all scripts runnable. You only need to do this once.
 # Phase 1: Preparation
 ./migration-scripts/phase1-preparation.sh
 
-# Phase 2: Flex Layout → CSS
-./migration-scripts/phase2-flex-layout-to-css.sh
+# Phase 2: Flex Layout → CSS (⭐ Use robust version - RECOMMENDED)
+./migration-scripts/phase2-flex-layout-to-css-robust.sh
+# OR use original version if you prefer:
+# ./migration-scripts/phase2-flex-layout-to-css.sh
 
 # Phase 3: Material Legacy → MDC
 ./migration-scripts/phase3-material-legacy-to-mdc.sh
@@ -51,6 +53,69 @@ This makes all scripts runnable. You only need to do this once.
 ```
 
 **That's it!** Each script will guide you through the process.
+
+---
+
+## Phase 2: Choosing Between Two Migration Options
+
+For Phase 2 (Flex Layout → CSS), you have **two options**:
+
+### Option A: Robust Migration (⭐ RECOMMENDED)
+
+```bash
+./migration-scripts/phase2-flex-layout-to-css-robust.sh
+```
+
+**Use this if you have:**
+- ✅ Dynamic flex bindings: `[fxFlex]="variable"`
+- ✅ Template expressions: `fxFlex="{{ expression }}"`
+- ✅ Calc() expressions: `fxFlex="calc(100% - 40px)"`
+- ✅ Complex responsive patterns
+- ✅ Issues with the original script
+
+**Features:**
+- Python-based HTML parser (no syntax breaking)
+- Properly merges CSS classes (no duplicates)
+- Creates TypeScript directives for dynamic bindings
+- Dry-run mode to preview changes
+- Comprehensive warnings for manual review
+- Handles ALL complex scenarios
+
+**Requirements:**
+- Python 3.x (pre-installed on macOS/Linux)
+
+**Interactive prompts:**
+1. Select **1** for dry-run (preview changes)
+2. Select **2** for full migration
+
+### Option B: Original Migration
+
+```bash
+./migration-scripts/phase2-flex-layout-to-css.sh
+```
+
+**Use this if:**
+- You only have simple static directives
+- You don't have Python 3 available
+- You prefer the original bash-only approach
+
+**Note:** If you encounter issues like:
+- Multiple `class=""` attributes
+- Broken HTML syntax
+- Incorrect responsive class generation
+
+Then switch to the **Robust version** (Option A).
+
+### Which One Should I Choose?
+
+**👉 We recommend the Robust version** for most projects, especially if you're unsure.
+
+```bash
+# Run this command to check if Python 3 is available:
+python3 --version
+
+# If you see "Python 3.x.x", you're good to go with the robust version!
+```
 
 ---
 
@@ -214,6 +279,45 @@ npm install
 
 ---
 
+### Issue: "command not found: python3"
+
+**Error:**
+```
+./migration-scripts/phase2-flex-layout-to-css-robust.sh: line 25: python3: command not found
+```
+
+**Solution:**
+
+**For macOS/Linux:**
+```bash
+# Check if Python 3 is installed
+python3 --version
+
+# If not installed, install it:
+# macOS (using Homebrew):
+brew install python3
+
+# Linux (Ubuntu/Debian):
+sudo apt update && sudo apt install python3
+
+# Then run the script again
+./migration-scripts/phase2-flex-layout-to-css-robust.sh
+```
+
+**For Windows:**
+```bash
+# Download Python from: https://www.python.org/downloads/
+# Install it and make sure to check "Add Python to PATH"
+# Then restart Git Bash and try again
+```
+
+**Alternative:** Use the original Phase 2 script if Python 3 is not available:
+```bash
+./migration-scripts/phase2-flex-layout-to-css.sh
+```
+
+---
+
 ### Issue: Windows - "cannot execute binary file"
 
 **Error:**
@@ -244,9 +348,11 @@ chmod +x migration-scripts/*.sh
 ./migration-scripts/phase1-preparation.sh
 # ✓ This will create git branches and inventory
 
-# 5. Run Phase 2
-./migration-scripts/phase2-flex-layout-to-css.sh
+# 5. Run Phase 2 (ROBUST VERSION - Recommended)
+./migration-scripts/phase2-flex-layout-to-css-robust.sh
 # ✓ This will convert Flex Layout to CSS (5-10 minutes)
+# ✓ Select option 1 for dry-run first, then option 2 for full migration
+# OR use original: ./migration-scripts/phase2-flex-layout-to-css.sh
 
 # 6. Run Phase 3
 ./migration-scripts/phase3-material-legacy-to-mdc.sh
@@ -277,13 +383,21 @@ If you prefer to run all scripts at once (not recommended for first time):
 # Make executable
 chmod +x migration-scripts/*.sh
 
-# Run all phases sequentially (will take 40-70 minutes)
+# Run all phases sequentially using ROBUST version (will take 40-70 minutes)
 ./migration-scripts/phase1-preparation.sh && \
-./migration-scripts/phase2-flex-layout-to-css.sh && \
+./migration-scripts/phase2-flex-layout-to-css-robust.sh && \
 ./migration-scripts/phase3-material-legacy-to-mdc.sh && \
 ./migration-scripts/phase4-angular-updates.sh && \
 ./migration-scripts/phase5-testing.sh && \
 ./migration-scripts/phase6-cleanup.sh
+
+# OR use original Phase 2 script:
+# ./migration-scripts/phase1-preparation.sh && \
+# ./migration-scripts/phase2-flex-layout-to-css.sh && \
+# ./migration-scripts/phase3-material-legacy-to-mdc.sh && \
+# ./migration-scripts/phase4-angular-updates.sh && \
+# ./migration-scripts/phase5-testing.sh && \
+# ./migration-scripts/phase6-cleanup.sh
 ```
 
 **⚠️ Warning:** This runs everything automatically. Better to run one at a time to review results.
@@ -347,6 +461,13 @@ which bash
 # Should show: /bin/bash or /usr/bin/bash
 ```
 
+### Check if Python 3 is available (for robust Phase 2):
+```bash
+python3 --version
+# Should show: Python 3.x.x
+# If not available, use the original Phase 2 script instead
+```
+
 ### Check if you're on the right branch:
 ```bash
 git branch
@@ -362,6 +483,12 @@ ls -la migration-scripts/
 ### View script without running:
 ```bash
 cat migration-scripts/phase1-preparation.sh
+```
+
+### Test Python migration script directly:
+```bash
+# Preview what changes would be made (dry-run)
+python3 migration-scripts/migrate-flex-to-css.py --dry-run --verbose
 ```
 
 ---
@@ -390,12 +517,30 @@ sh /full/path/to/migration-scripts/phase1-preparation.sh
 1. Open Terminal/Git Bash
 2. Go to your project: `cd /path/to/project`
 3. Make executable: `chmod +x migration-scripts/*.sh`
-4. Run: `./migration-scripts/phase1-preparation.sh`
-5. Continue with phase2, phase3, etc.
+4. Run Phase 1: `./migration-scripts/phase1-preparation.sh`
+5. Run Phase 2: `./migration-scripts/phase2-flex-layout-to-css-robust.sh` ⭐ (Recommended)
+   - Or use original: `./migration-scripts/phase2-flex-layout-to-css.sh`
+6. Continue with phase3, phase4, phase5, phase6
 
 **That's all you need!** The scripts will guide you through everything else.
 
+---
+
+## Quick Reference: Phase 2 Options
+
+| Feature | Robust Version | Original Version |
+|---------|---------------|------------------|
+| **Script** | `phase2-flex-layout-to-css-robust.sh` | `phase2-flex-layout-to-css.sh` |
+| **Requires Python 3** | ✅ Yes | ❌ No |
+| **Dry-run mode** | ✅ Yes | ❌ No |
+| **Dynamic bindings** | ✅ Full support | ⚠️ Limited |
+| **Complex scenarios** | ✅ All handled | ⚠️ Some issues |
+| **Class merging** | ✅ Perfect | ⚠️ May duplicate |
+| **HTML preservation** | ✅ Always | ⚠️ May break |
+| **Recommended for** | ✅ Most projects | Simple projects only |
+
+**Need more details?** See [FLEX_MIGRATION_GUIDE.md](FLEX_MIGRATION_GUIDE.md)
 
 ---
 
-*Last Updated: 2025-11-18*
+*Last Updated: 2025-11-21*
