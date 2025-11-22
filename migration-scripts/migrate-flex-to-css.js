@@ -13,7 +13,21 @@
 
 const fs = require('fs');
 const path = require('path');
-const { glob } = require('glob');
+
+// Support both old and new glob versions
+let glob;
+try {
+  // Try new glob API (v8+)
+  glob = require('glob').glob;
+  if (!glob) {
+    // Fallback to default export (v7 and earlier)
+    glob = require('glob');
+  }
+} catch (e) {
+  // Last resort - try require('glob').default
+  const globModule = require('glob');
+  glob = globModule.glob || globModule.default || globModule;
+}
 
 class FlexMigrator {
   constructor(options = {}) {
@@ -482,10 +496,43 @@ class FlexMigrator {
    * Migrate all HTML files in directory
    */
   async migrateDirectory() {
-    const htmlFiles = await glob(`${this.srcDir}/**/*.html`);
-    this.log(`Found ${htmlFiles.length} HTML files`, 'info');
+    try {
+      let htmlFiles;
 
-    htmlFiles.forEach(file => this.migrateFile(file));
+      // Try async glob first
+      try {
+        htmlFiles = await glob(`${this.srcDir}/**/*.html`);
+      } catch (e) {
+        // Fallback to sync glob if async fails
+        this.log('Async glob failed, trying sync version...', 'warning');
+        const globSync = require('glob').globSync || require('glob').sync;
+        htmlFiles = globSync(`${this.srcDir}/**/*.html`);
+      }
+
+      // Ensure htmlFiles is an array
+      if (!htmlFiles) {
+        this.log(`Error: glob returned null/undefined`, 'error');
+        return;
+      }
+
+      if (!Array.isArray(htmlFiles)) {
+        this.log(`Error: glob did not return an array. Got: ${typeof htmlFiles}`, 'error');
+        this.log(`Value: ${JSON.stringify(htmlFiles)}`, 'error');
+        return;
+      }
+
+      this.log(`Found ${htmlFiles.length} HTML files`, 'info');
+
+      if (htmlFiles.length === 0) {
+        this.log(`No HTML files found in ${this.srcDir}`, 'warning');
+        return;
+      }
+
+      htmlFiles.forEach(file => this.migrateFile(file));
+    } catch (error) {
+      this.log(`Error in migrateDirectory: ${error.message}`, 'error');
+      throw error;
+    }
 
     console.log();
     this.log(`${this.dryRun ? '[DRY RUN] ' : ''}Migration complete!`, 'success');
