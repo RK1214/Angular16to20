@@ -664,7 +664,19 @@ class FlexMigrator {
         return;
       }
 
-      htmlFiles.forEach(file => this.migrateFile(file));
+      console.log('');
+      htmlFiles.forEach((file, index) => {
+        const beforeCount = this.customClasses.size;
+        this.migrateFile(file);
+        const afterCount = this.customClasses.size;
+        const newClasses = afterCount - beforeCount;
+
+        if (newClasses > 0) {
+          console.log(`  [${index + 1}/${htmlFiles.length}] ${file} → +${newClasses} custom class(es)`);
+        } else {
+          console.log(`  [${index + 1}/${htmlFiles.length}] ${file}`);
+        }
+      });
     } catch (error) {
       this.log(`Error in migrateDirectory: ${error.message}`, 'error');
       throw error;
@@ -855,6 +867,10 @@ class FlexMigrator {
     // Append custom classes if any were collected
     let finalScss = scss;
     if (this.customClasses.size > 0) {
+      if (this.verbose) {
+        console.log(`\nWriting ${this.customClasses.size} custom classes to CSS...`);
+      }
+
       finalScss += '\n// ===================================\n';
       finalScss += '// Custom Classes (Dynamically Generated)\n';
       finalScss += '// ===================================\n\n';
@@ -881,33 +897,63 @@ class FlexMigrator {
         a.name.localeCompare(b.name)
       );
 
+      let classesWritten = 0;
+
       sortedClasses.forEach(({ name, type, value, breakpoint }) => {
         if (type === 'flex') {
           // Use flex: 1 1 for all values (allow grow/shrink)
           finalScss += `.${name} { flex: 1 1 ${value}; max-width: ${value}; }\n`;
+          if (this.verbose) {
+            console.log(`  ✓ .${name} { flex: 1 1 ${value}; max-width: ${value}; }`);
+          }
+          classesWritten++;
         } else if (type === 'flex-breakpoint') {
           // Breakpoint-specific flex (percentage or pixel with breakpoint)
           const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
           finalScss += `${mediaQuery} {\n`;
           finalScss += `  .${name} { flex: 1 1 ${value}; max-width: ${value}; }\n`;
           finalScss += `}\n`;
+          if (this.verbose) {
+            console.log(`  ✓ .${name} { flex: 1 1 ${value}; ... } [@${breakpoint}]`);
+          }
+          classesWritten++;
         } else if (type === 'flex-calc') {
           // Generate breakpoint-specific calc class with media query
           const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
           finalScss += `${mediaQuery} {\n`;
           finalScss += `  .${name} { flex: 1 1 ${value}; max-width: ${value}; }\n`;
           finalScss += `}\n`;
+          if (this.verbose) {
+            console.log(`  ✓ .${name} { flex: 1 1 ${value}; ... } [@${breakpoint}]`);
+          }
+          classesWritten++;
         } else if (type === 'gap') {
           // Custom gap value (no breakpoint)
           finalScss += `.${name} { gap: ${value}; }\n`;
+          if (this.verbose) {
+            console.log(`  ✓ .${name} { gap: ${value}; }`);
+          }
+          classesWritten++;
         } else if (type === 'gap-breakpoint') {
           // Breakpoint-specific gap
           const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
           finalScss += `${mediaQuery} {\n`;
           finalScss += `  .${name} { gap: ${value}; }\n`;
           finalScss += `}\n`;
+          if (this.verbose) {
+            console.log(`  ✓ .${name} { gap: ${value}; } [@${breakpoint}]`);
+          }
+          classesWritten++;
         }
       });
+
+      if (this.verbose) {
+        console.log(`\n✅ ${classesWritten} custom classes written to CSS`);
+      }
+    } else {
+      if (this.verbose) {
+        console.log('\nNo custom classes to write (all values are standard)');
+      }
     }
 
     if (!this.dryRun) {
@@ -1237,19 +1283,104 @@ Examples:
 
   const migrator = new FlexMigrator(options);
 
-  console.log('Generating _layout.scss...');
-  migrator.generateLayoutScss(path.join(options.srcDir, 'styles/_layout.scss'));
-
-  console.log('\nGenerating TypeScript directives...');
-  migrator.generateDirectives(path.join(options.srcDir, 'app/shared'));
-
   if (!options.generateOnly) {
-    console.log(`\nMigrating HTML files in ${options.srcDir}...`);
+    console.log('\n' + '='.repeat(80));
+    console.log('STEP 1: Migrating HTML files to collect custom classes...');
+    console.log('='.repeat(80));
+    console.log(`Source directory: ${options.srcDir}`);
+    console.log('');
+
     await migrator.migrateDirectory();
 
-    console.log('\n' + '='.repeat(50));
-    console.log('Next Steps:');
-    console.log('='.repeat(50));
+    console.log('\n' + '='.repeat(80));
+    console.log('STEP 2: Custom Classes Summary');
+    console.log('='.repeat(80));
+    console.log(`Total custom classes collected: ${migrator.customClasses.size}`);
+    console.log('');
+
+    if (migrator.customClasses.size > 0) {
+      console.log('Custom classes to be generated:');
+      console.log('-'.repeat(80));
+
+      // Group by type
+      const byType = {
+        'flex': [],
+        'flex-breakpoint': [],
+        'flex-calc': [],
+        'gap': [],
+        'gap-breakpoint': []
+      };
+
+      Array.from(migrator.customClasses.values()).forEach(cls => {
+        byType[cls.type] = byType[cls.type] || [];
+        byType[cls.type].push(cls);
+      });
+
+      if (byType['flex'].length > 0) {
+        console.log(`\n  Custom Flex Values (${byType['flex'].length}):`);
+        byType['flex'].forEach(({ name, value }) => {
+          console.log(`    - ${name} → flex: 1 1 ${value}`);
+        });
+      }
+
+      if (byType['flex-breakpoint'].length > 0) {
+        console.log(`\n  Breakpoint-Specific Flex (${byType['flex-breakpoint'].length}):`);
+        byType['flex-breakpoint'].forEach(({ name, value, breakpoint }) => {
+          console.log(`    - ${name} → flex: 1 1 ${value} [@${breakpoint}]`);
+        });
+      }
+
+      if (byType['flex-calc'].length > 0) {
+        console.log(`\n  Calc Expressions (${byType['flex-calc'].length}):`);
+        byType['flex-calc'].forEach(({ name, value, breakpoint }) => {
+          console.log(`    - ${name} → flex: 1 1 ${value} [@${breakpoint}]`);
+        });
+      }
+
+      if (byType['gap'].length > 0) {
+        console.log(`\n  Custom Gap Values (${byType['gap'].length}):`);
+        byType['gap'].forEach(({ name, value }) => {
+          console.log(`    - ${name} → gap: ${value}`);
+        });
+      }
+
+      if (byType['gap-breakpoint'].length > 0) {
+        console.log(`\n  Breakpoint-Specific Gaps (${byType['gap-breakpoint'].length}):`);
+        byType['gap-breakpoint'].forEach(({ name, value, breakpoint }) => {
+          console.log(`    - ${name} → gap: ${value} [@${breakpoint}]`);
+        });
+      }
+
+      console.log('');
+    } else {
+      console.log('No custom classes found (all values are standard)');
+      console.log('');
+    }
+  }
+
+  console.log('='.repeat(80));
+  console.log('STEP 3: Generating _layout.scss with custom classes...');
+  console.log('='.repeat(80));
+  const layoutPath = path.join(options.srcDir, 'styles/_layout.scss');
+  console.log(`Output: ${layoutPath}`);
+  console.log(`Custom classes to add: ${migrator.customClasses.size}`);
+  console.log('');
+  migrator.generateLayoutScss(layoutPath);
+  console.log('✅ _layout.scss generated successfully!');
+
+  console.log('\n' + '='.repeat(80));
+  console.log('STEP 4: Generating TypeScript directives...');
+  console.log('='.repeat(80));
+  const directivesPath = path.join(options.srcDir, 'app/shared');
+  console.log(`Output: ${directivesPath}`);
+  console.log('');
+  migrator.generateDirectives(directivesPath);
+  console.log('✅ TypeScript directives generated successfully!');
+
+  if (!options.generateOnly) {
+    console.log('\n' + '='.repeat(80));
+    console.log('Migration Complete! Next Steps:');
+    console.log('='.repeat(80));
     console.log('1. Import _layout.scss in your styles.scss:');
     console.log("   @import './styles/layout';");
     console.log();
@@ -1257,7 +1388,7 @@ Examples:
     console.log('3. Review warnings above for manual fixes needed');
     console.log('4. Test your application thoroughly');
     console.log('5. Remove @angular/flex-layout from package.json');
-    console.log('='.repeat(50));
+    console.log('='.repeat(80));
   }
 }
 
