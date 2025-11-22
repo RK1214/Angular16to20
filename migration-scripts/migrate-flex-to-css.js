@@ -172,26 +172,31 @@ class FlexMigrator {
    * Convert fxLayoutAlign to CSS classes
    */
   convertLayoutAlign(value, breakpoint = null) {
-    const alignMap = {
-      'start start': 'align-start-start',
-      'start center': 'align-start-center',
-      'start end': 'align-start-end',
-      'center start': 'align-center-start',
-      'center center': 'align-center-center',
-      'center end': 'align-center-end',
-      'end start': 'align-end-start',
-      'end center': 'align-end-center',
-      'end end': 'align-end-end',
-      'space-between start': 'align-space-between-start',
-      'space-between center': 'align-space-between-center',
-      'space-between end': 'align-space-between-end',
-      'space-around center': 'align-space-around-center',
-      'space-evenly center': 'align-space-evenly-center',
-    };
+    // Normalize the value: trim and handle single values
+    let normalizedValue = value.trim();
 
-    const cssClass = alignMap[value] || 'align-start-start';
+    // If only one value is provided, it's the main axis alignment
+    // Default cross axis is 'stretch' in Angular Flex Layout
+    const parts = normalizedValue.split(/\s+/);
+    let mainAxis = parts[0] || 'start';
+    let crossAxis = parts[1] || 'stretch';
+
+    // Validate main axis values
+    const validMainAxis = ['start', 'center', 'end', 'space-around', 'space-between', 'space-evenly'];
+    if (!validMainAxis.includes(mainAxis)) {
+      mainAxis = 'start';
+    }
+
+    // Validate cross axis values
+    const validCrossAxis = ['start', 'center', 'end', 'stretch', 'baseline'];
+    if (!validCrossAxis.includes(crossAxis)) {
+      crossAxis = 'stretch';
+    }
+
+    // Construct class name
+    const className = `align-${mainAxis}-${crossAxis}`;
     const suffix = breakpoint ? `-${breakpoint}` : '';
-    return [cssClass + suffix];
+    return [className + suffix];
   }
 
   /**
@@ -350,7 +355,158 @@ class FlexMigrator {
   }
 
   /**
-   * Convert fxShow/fxHide to CSS classes
+   * Convert fxShow/fxHide directives as a group to handle inverse cases
+   * Example: fxShow + fxShow.xs="false" → hide-xs show-gt-xs
+   */
+  convertShowHideGroup(directives) {
+    const classes = [];
+    const showDirectives = {};
+    const hideDirectives = {};
+
+    // Collect all fxShow and fxHide directives
+    Object.entries(directives).forEach(([key, data]) => {
+      if (key.startsWith('fxShow')) {
+        const breakpoint = data.breakpoint || null;
+        showDirectives[breakpoint || 'base'] = data.value;
+      } else if (key.startsWith('fxHide')) {
+        const breakpoint = data.breakpoint || null;
+        hideDirectives[breakpoint || 'base'] = data.value;
+      }
+    });
+
+    // Helper to check if value means "apply"
+    const isTrue = (val) => val === true || val === 'true' || val === '' || !val;
+    const isFalse = (val) => val === 'false' || val === false;
+
+    // Process fxShow directives
+    if (Object.keys(showDirectives).length > 0) {
+      const hasBase = 'base' in showDirectives;
+      const baseValue = showDirectives.base;
+
+      if (hasBase && isTrue(baseValue)) {
+        // fxShow (show everywhere by default)
+        classes.push('show');
+
+        // Check for breakpoint-specific false values
+        Object.entries(showDirectives).forEach(([bp, val]) => {
+          if (bp !== 'base' && isFalse(val)) {
+            // fxShow + fxShow.xs="false" → hide on xs, show on larger
+            classes.push(`hide-${bp}`);
+            const complementBreakpoint = this.getComplementBreakpoint(bp);
+            if (complementBreakpoint) {
+              classes.push(`show-${complementBreakpoint}`);
+            }
+            this.warnings.add(`fxShow with fxShow.${bp}="false" creates hide-${bp} - review responsive behavior`);
+          }
+        });
+      } else if (hasBase && isFalse(baseValue)) {
+        // fxShow="false" (hide everywhere by default)
+        classes.push('hide');
+
+        // Check for breakpoint-specific true values
+        Object.entries(showDirectives).forEach(([bp, val]) => {
+          if (bp !== 'base' && isTrue(val)) {
+            // fxShow="false" + fxShow.xs → show on xs, hide on larger
+            classes.push(`show-${bp}`);
+            const complementBreakpoint = this.getComplementBreakpoint(bp);
+            if (complementBreakpoint) {
+              classes.push(`hide-${complementBreakpoint}`);
+            }
+            this.warnings.add(`fxShow="false" with fxShow.${bp} creates show-${bp} - review responsive behavior`);
+          }
+        });
+      } else {
+        // No base, only breakpoint-specific
+        Object.entries(showDirectives).forEach(([bp, val]) => {
+          if (bp !== 'base') {
+            if (isTrue(val)) {
+              classes.push(`show-${bp}`);
+            } else if (isFalse(val)) {
+              classes.push(`hide-${bp}`);
+            }
+          }
+        });
+      }
+    }
+
+    // Process fxHide directives (similar logic but inverted)
+    if (Object.keys(hideDirectives).length > 0) {
+      const hasBase = 'base' in hideDirectives;
+      const baseValue = hideDirectives.base;
+
+      if (hasBase && isTrue(baseValue)) {
+        // fxHide (hide everywhere by default)
+        classes.push('hide');
+
+        // Check for breakpoint-specific false values
+        Object.entries(hideDirectives).forEach(([bp, val]) => {
+          if (bp !== 'base' && isFalse(val)) {
+            // fxHide + fxHide.xs="false" → show on xs, hide on larger
+            classes.push(`show-${bp}`);
+            const complementBreakpoint = this.getComplementBreakpoint(bp);
+            if (complementBreakpoint) {
+              classes.push(`hide-${complementBreakpoint}`);
+            }
+            this.warnings.add(`fxHide with fxHide.${bp}="false" creates show-${bp} - review responsive behavior`);
+          }
+        });
+      } else if (hasBase && isFalse(baseValue)) {
+        // fxHide="false" (show everywhere by default)
+        classes.push('show');
+
+        // Check for breakpoint-specific true values
+        Object.entries(hideDirectives).forEach(([bp, val]) => {
+          if (bp !== 'base' && isTrue(val)) {
+            // fxHide="false" + fxHide.xs → hide on xs, show on larger
+            classes.push(`hide-${bp}`);
+            const complementBreakpoint = this.getComplementBreakpoint(bp);
+            if (complementBreakpoint) {
+              classes.push(`show-${complementBreakpoint}`);
+            }
+            this.warnings.add(`fxHide="false" with fxHide.${bp} creates hide-${bp} - review responsive behavior`);
+          }
+        });
+      } else {
+        // No base, only breakpoint-specific
+        Object.entries(hideDirectives).forEach(([bp, val]) => {
+          if (bp !== 'base') {
+            if (isTrue(val)) {
+              classes.push(`hide-${bp}`);
+            } else if (isFalse(val)) {
+              classes.push(`show-${bp}`);
+            }
+          }
+        });
+      }
+    }
+
+    return classes;
+  }
+
+  /**
+   * Get the complement breakpoint (e.g., xs → gt-xs, sm → gt-sm, etc.)
+   */
+  getComplementBreakpoint(breakpoint) {
+    const complements = {
+      'xs': 'gt-xs',
+      'sm': 'gt-sm',
+      'md': 'gt-md',
+      'lg': 'gt-lg',
+      'xl': null,  // No larger breakpoint
+      'lt-sm': 'sm',
+      'lt-md': 'md',
+      'lt-lg': 'lg',
+      'lt-xl': 'xl',
+      'gt-xs': 'xs',
+      'gt-sm': 'sm',
+      'gt-md': 'md',
+      'gt-lg': 'lg',
+    };
+    return complements[breakpoint] || null;
+  }
+
+  /**
+   * Convert fxShow/fxHide to CSS classes (legacy - kept for backwards compatibility)
    * Note: fxShow/fxHide with boolean values and multiple breakpoints is complex
    * and often requires manual review for proper responsive behavior
    */
@@ -453,6 +609,15 @@ class FlexMigrator {
     const newCssClasses = [];
     const directiveBindings = [];
 
+    // First, handle fxShow/fxHide as a group (to handle inverse cases)
+    const hasShowHide = Object.keys(directives).some(key =>
+      key.startsWith('fxShow') || key.startsWith('fxHide')
+    );
+    if (hasShowHide) {
+      const showHideClasses = this.convertShowHideGroup(directives);
+      showHideClasses.forEach(cls => newCssClasses.push(cls));
+    }
+
     // Process each directive
     Object.entries(directives).forEach(([key, data]) => {
       if (key.startsWith('_')) return; // Skip internal keys
@@ -514,7 +679,7 @@ class FlexMigrator {
 
         case 'fxShow':
         case 'fxHide':
-          this.convertShowHide(directiveName, value, breakpoint).forEach(cls => newCssClasses.push(cls));
+          // Already handled by convertShowHideGroup above
           break;
       }
     });
@@ -714,20 +879,47 @@ class FlexMigrator {
 .flex-nowrap { flex-wrap: nowrap; }
 
 // Alignment utilities
+// Main axis: start
 .align-start-start { display: flex; justify-content: flex-start; align-items: flex-start; }
 .align-start-center { display: flex; justify-content: flex-start; align-items: center; }
 .align-start-end { display: flex; justify-content: flex-start; align-items: flex-end; }
+.align-start-stretch { display: flex; justify-content: flex-start; align-items: stretch; }
+.align-start-baseline { display: flex; justify-content: flex-start; align-items: baseline; }
+
+// Main axis: center
 .align-center-start { display: flex; justify-content: center; align-items: flex-start; }
 .align-center-center { display: flex; justify-content: center; align-items: center; }
 .align-center-end { display: flex; justify-content: center; align-items: flex-end; }
+.align-center-stretch { display: flex; justify-content: center; align-items: stretch; }
+.align-center-baseline { display: flex; justify-content: center; align-items: baseline; }
+
+// Main axis: end
 .align-end-start { display: flex; justify-content: flex-end; align-items: flex-start; }
 .align-end-center { display: flex; justify-content: flex-end; align-items: center; }
 .align-end-end { display: flex; justify-content: flex-end; align-items: flex-end; }
+.align-end-stretch { display: flex; justify-content: flex-end; align-items: stretch; }
+.align-end-baseline { display: flex; justify-content: flex-end; align-items: baseline; }
+
+// Main axis: space-between
 .align-space-between-start { display: flex; justify-content: space-between; align-items: flex-start; }
 .align-space-between-center { display: flex; justify-content: space-between; align-items: center; }
 .align-space-between-end { display: flex; justify-content: space-between; align-items: flex-end; }
+.align-space-between-stretch { display: flex; justify-content: space-between; align-items: stretch; }
+.align-space-between-baseline { display: flex; justify-content: space-between; align-items: baseline; }
+
+// Main axis: space-around
+.align-space-around-start { display: flex; justify-content: space-around; align-items: flex-start; }
 .align-space-around-center { display: flex; justify-content: space-around; align-items: center; }
+.align-space-around-end { display: flex; justify-content: space-around; align-items: flex-end; }
+.align-space-around-stretch { display: flex; justify-content: space-around; align-items: stretch; }
+.align-space-around-baseline { display: flex; justify-content: space-around; align-items: baseline; }
+
+// Main axis: space-evenly
+.align-space-evenly-start { display: flex; justify-content: space-evenly; align-items: flex-start; }
 .align-space-evenly-center { display: flex; justify-content: space-evenly; align-items: center; }
+.align-space-evenly-end { display: flex; justify-content: space-evenly; align-items: flex-end; }
+.align-space-evenly-stretch { display: flex; justify-content: space-evenly; align-items: stretch; }
+.align-space-evenly-baseline { display: flex; justify-content: space-evenly; align-items: baseline; }
 
 // Flex item alignment (fxFlexAlign)
 .align-self-start { align-self: flex-start; }
@@ -1058,14 +1250,14 @@ export function convertWrapValue(value: string): string {
 }
 `;
 
-    const directivesContent = `import { Directive, ElementRef, Input, OnInit, OnChanges, Renderer2, SimpleChanges } from '@angular/core';
+    const directivesContent = `import { Directive, ElementRef, Input, AfterViewInit, OnChanges, Renderer2, SimpleChanges } from '@angular/core';
 import { convertFlexValue, convertGapValue, convertLayoutValue, convertWrapValue } from '../utils/flex.utils';
 
 @Directive({
   selector: '[appFlex]',
   standalone: false
 })
-export class FlexDirective implements OnInit, OnChanges {
+export class FlexDirective implements AfterViewInit, OnChanges {
   @Input() appFlex: string | number = '1 1 auto';
 
   constructor(
@@ -1073,12 +1265,17 @@ export class FlexDirective implements OnInit, OnChanges {
     private renderer: Renderer2
   ) {}
 
-  ngOnInit(): void {
-    this.updateFlex();
+  ngAfterViewInit(): void {
+    // Use setTimeout to ensure styles are applied after view is fully initialized
+    // This fixes the issue where the first element's styles don't apply
+    setTimeout(() => {
+      this.updateFlex();
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['appFlex']) {
+    if (changes['appFlex'] && !changes['appFlex'].firstChange) {
+      // Update immediately on changes (after initial render)
       this.updateFlex();
     }
   }
@@ -1086,6 +1283,17 @@ export class FlexDirective implements OnInit, OnChanges {
   private updateFlex(): void {
     const flexValue = convertFlexValue(this.appFlex);
     this.renderer.setStyle(this.el.nativeElement, 'flex', flexValue);
+
+    // Also set max-width for proper sizing (especially important for calc() values)
+    // Extract the flex-basis value (third part of flex shorthand)
+    const parts = flexValue.split(' ');
+    if (parts.length >= 3) {
+      const flexBasis = parts.slice(2).join(' '); // Handle "calc(100% - 40px)" with spaces
+      // Set max-width only for non-auto values
+      if (flexBasis !== 'auto') {
+        this.renderer.setStyle(this.el.nativeElement, 'max-width', flexBasis);
+      }
+    }
   }
 }
 
@@ -1093,7 +1301,7 @@ export class FlexDirective implements OnInit, OnChanges {
   selector: '[appGap]',
   standalone: false
 })
-export class GapDirective implements OnInit, OnChanges {
+export class GapDirective implements AfterViewInit, OnChanges {
   @Input() appGap: string | number = '0';
 
   constructor(
@@ -1101,12 +1309,14 @@ export class GapDirective implements OnInit, OnChanges {
     private renderer: Renderer2
   ) {}
 
-  ngOnInit(): void {
-    this.updateGap();
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.updateGap();
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['appGap']) {
+    if (changes['appGap'] && !changes['appGap'].firstChange) {
       this.updateGap();
     }
   }
@@ -1121,7 +1331,7 @@ export class GapDirective implements OnInit, OnChanges {
   selector: '[appLayout]',
   standalone: false
 })
-export class LayoutDirective implements OnInit, OnChanges {
+export class LayoutDirective implements AfterViewInit, OnChanges {
   @Input() appLayout: string = 'row';
 
   constructor(
@@ -1129,12 +1339,14 @@ export class LayoutDirective implements OnInit, OnChanges {
     private renderer: Renderer2
   ) {}
 
-  ngOnInit(): void {
-    this.updateLayout();
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.updateLayout();
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['appLayout']) {
+    if (changes['appLayout'] && !changes['appLayout'].firstChange) {
       this.updateLayout();
     }
   }
@@ -1153,7 +1365,7 @@ export class LayoutDirective implements OnInit, OnChanges {
   selector: '[appLayoutAlign]',
   standalone: false
 })
-export class LayoutAlignDirective implements OnInit, OnChanges {
+export class LayoutAlignDirective implements AfterViewInit, OnChanges {
   @Input() appLayoutAlign: string = 'start start';
 
   constructor(
@@ -1161,12 +1373,14 @@ export class LayoutAlignDirective implements OnInit, OnChanges {
     private renderer: Renderer2
   ) {}
 
-  ngOnInit(): void {
-    this.updateAlign();
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.updateAlign();
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['appLayoutAlign']) {
+    if (changes['appLayoutAlign'] && !changes['appLayoutAlign'].firstChange) {
       this.updateAlign();
     }
   }
@@ -1200,7 +1414,7 @@ export class LayoutAlignDirective implements OnInit, OnChanges {
   selector: '[appFlexOrder]',
   standalone: false
 })
-export class FlexOrderDirective implements OnInit, OnChanges {
+export class FlexOrderDirective implements AfterViewInit, OnChanges {
   @Input() appFlexOrder: number | string = 0;
 
   constructor(
@@ -1208,12 +1422,14 @@ export class FlexOrderDirective implements OnInit, OnChanges {
     private renderer: Renderer2
   ) {}
 
-  ngOnInit(): void {
-    this.updateOrder();
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.updateOrder();
+    }, 0);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['appFlexOrder']) {
+    if (changes['appFlexOrder'] && !changes['appFlexOrder'].firstChange) {
       this.updateOrder();
     }
   }

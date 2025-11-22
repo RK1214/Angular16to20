@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test appFlex Directive Runtime Issue</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #ccc;
+      padding: 10px;
+    }
+    .box {
+      background: #e3f2fd;
+      border: 2px solid #2196f3;
+      padding: 20px;
+      min-height: 100px;
+    }
+    .issue {
+      background: #ffebee;
+      border-color: #f44336;
+    }
+    .working {
+      background: #e8f5e9;
+      border-color: #4caf50;
+    }
+  </style>
+</head>
+<body>
+  <h1>appFlex Directive Runtime Issue Test</h1>
+
+  <h2>Scenario: 2 Elements with calc() values</h2>
+
+  <div class="container">
+    <div class="box issue" id="first">
+      <strong>FIRST ELEMENT</strong><br>
+      [appFlex]="'calc(100% - 40px)'"<br>
+      <span id="first-styles">Checking styles...</span>
+    </div>
+
+    <div class="box working" id="second">
+      <strong>SECOND ELEMENT</strong><br>
+      [appFlex]="'calc(50% - 20px)'"<br>
+      <span id="second-styles">Checking styles...</span>
+    </div>
+  </div>
+
+  <h2>Expected Behavior</h2>
+  <p>Both elements should have inline styles:</p>
+  <pre>
+First:  style="flex: 1 1 calc(100% - 40px); max-width: calc(100% - 40px);"
+Second: style="flex: 1 1 calc(50% - 20px); max-width: calc(50% - 20px);"
+  </pre>
+
+  <h2>Actual Issue</h2>
+  <p id="issue-description">The FIRST element's inline styles are missing or not applied correctly.</p>
+
+  <script>
+    // Simulate what the directive should do
+    function applyFlexDirective(element, value) {
+      // This simulates the FlexDirective.updateFlex() method
+      const flexValue = `1 1 ${value}`;
+      element.style.flex = flexValue;
+      element.style.maxWidth = value;
+    }
+
+    // Simulate directive initialization
+    window.addEventListener('DOMContentLoaded', () => {
+      const first = document.getElementById('first');
+      const second = document.getElementById('second');
+
+      // Apply directives
+      applyFlexDirective(first, 'calc(100% - 40px)');
+      applyFlexDirective(second, 'calc(50% - 20px)');
+
+      // Check and display what was actually applied
+      setTimeout(() => {
+        const firstFlex = window.getComputedStyle(first).flex;
+        const firstMaxWidth = window.getComputedStyle(first).maxWidth;
+        const secondFlex = window.getComputedStyle(second).flex;
+        const secondMaxWidth = window.getComputedStyle(second).maxWidth;
+
+        document.getElementById('first-styles').innerHTML = `
+          flex: ${first.style.flex || 'NOT SET'}<br>
+          max-width: ${first.style.maxWidth || 'NOT SET'}
+        `;
+
+        document.getElementById('second-styles').innerHTML = `
+          flex: ${second.style.flex || 'NOT SET'}<br>
+          max-width: ${second.style.maxWidth || 'NOT SET'}
+        `;
+
+        // Check if there's an issue
+        if (!first.style.flex || !first.style.maxWidth) {
+          document.getElementById('issue-description').innerHTML =
+            '<strong style="color: red;">❌ ISSUE CONFIRMED: First element missing inline styles!</strong>';
+        } else {
+          document.getElementById('issue-description').innerHTML =
+            '<strong style="color: green;">✅ Both elements have correct inline styles</strong>';
+        }
+      }, 100);
+    });
+  </script>
+</body>
+</html>
