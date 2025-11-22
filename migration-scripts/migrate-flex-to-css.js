@@ -367,7 +367,7 @@ class FlexMigrator {
    * Convert fxLayoutGap to CSS class or directive
    */
   convertGap(value, breakpoint = null) {
-    // Check if dynamic
+    // Check if dynamic (not a simple number or pixel value)
     if (!value.match(/^\d+\s*px$/) && !/^\d+$/.test(value)) {
       return { classes: [], directive: `[appGap]="${value}"` };
     }
@@ -375,7 +375,29 @@ class FlexMigrator {
     const gapValue = value.replace('px', '').trim();
     if (/^\d+$/.test(gapValue)) {
       const suffix = breakpoint ? `-${breakpoint}` : '';
-      return { classes: [`gap-${gapValue}${suffix}`], directive: null };
+      const className = `gap-${gapValue}${suffix}`;
+
+      // Track custom gap values that aren't in the standard set
+      const standardGaps = ['4', '5', '8', '12', '16', '20', '24', '32', '48'];
+      if (!breakpoint && !standardGaps.includes(gapValue)) {
+        // Custom gap value - add to custom classes
+        this.customClasses.add({
+          name: className,
+          type: 'gap',
+          value: `${gapValue}px`,
+          breakpoint: null
+        });
+      } else if (breakpoint) {
+        // Breakpoint-specific gap - always add as custom
+        this.customClasses.add({
+          name: className,
+          type: 'gap-breakpoint',
+          value: `${gapValue}px`,
+          breakpoint: breakpoint
+        });
+      }
+
+      return { classes: [className], directive: null };
     }
 
     return { classes: [], directive: null };
@@ -704,35 +726,35 @@ class FlexMigrator {
 .flex-3 { flex: 3; }
 
 // Percentage flex
-.flex-10 { flex: 0 0 10%; max-width: 10%; }
-.flex-20 { flex: 0 0 20%; max-width: 20%; }
-.flex-25 { flex: 0 0 25%; max-width: 25%; }
-.flex-30 { flex: 0 0 30%; max-width: 30%; }
-.flex-33 { flex: 0 0 33.333%; max-width: 33.333%; }
-.flex-40 { flex: 0 0 40%; max-width: 40%; }
-.flex-50 { flex: 0 0 50%; max-width: 50%; }
-.flex-60 { flex: 0 0 60%; max-width: 60%; }
-.flex-66 { flex: 0 0 66.666%; max-width: 66.666%; }
-.flex-70 { flex: 0 0 70%; max-width: 70%; }
-.flex-75 { flex: 0 0 75%; max-width: 75%; }
-.flex-80 { flex: 0 0 80%; max-width: 80%; }
-.flex-90 { flex: 0 0 90%; max-width: 90%; }
-.flex-100 { flex: 0 0 100%; max-width: 100%; }
+.flex-10 { flex: 1 1 10%; max-width: 10%; }
+.flex-20 { flex: 1 1 20%; max-width: 20%; }
+.flex-25 { flex: 1 1 25%; max-width: 25%; }
+.flex-30 { flex: 1 1 30%; max-width: 30%; }
+.flex-33 { flex: 1 1 33.333%; max-width: 33.333%; }
+.flex-40 { flex: 1 1 40%; max-width: 40%; }
+.flex-50 { flex: 1 1 50%; max-width: 50%; }
+.flex-60 { flex: 1 1 60%; max-width: 60%; }
+.flex-66 { flex: 1 1 66.666%; max-width: 66.666%; }
+.flex-70 { flex: 1 1 70%; max-width: 70%; }
+.flex-75 { flex: 1 1 75%; max-width: 75%; }
+.flex-80 { flex: 1 1 80%; max-width: 80%; }
+.flex-90 { flex: 1 1 90%; max-width: 90%; }
+.flex-100 { flex: 1 1 100%; max-width: 100%; }
 
 // Fixed width flex
-.flex-20px { flex: 0 0 20px; max-width: 20px; }
-.flex-30px { flex: 0 0 30px; max-width: 30px; }
-.flex-40px { flex: 0 0 40px; max-width: 40px; }
-.flex-50px { flex: 0 0 50px; max-width: 50px; }
-.flex-100px { flex: 0 0 100px; max-width: 100px; }
-.flex-142px { flex: 0 0 142px; max-width: 142px; }
-.flex-150px { flex: 0 0 150px; max-width: 150px; }
-.flex-200px { flex: 0 0 200px; max-width: 200px; }
-.flex-220px { flex: 0 0 220px; max-width: 220px; }
-.flex-250px { flex: 0 0 250px; max-width: 250px; }
-.flex-300px { flex: 0 0 300px; max-width: 300px; }
-.flex-400px { flex: 0 0 400px; max-width: 400px; }
-.flex-500px { flex: 0 0 500px; max-width: 500px; }
+.flex-20px { flex: 1 1 20px; max-width: 20px; }
+.flex-30px { flex: 1 1 30px; max-width: 30px; }
+.flex-40px { flex: 1 1 40px; max-width: 40px; }
+.flex-50px { flex: 1 1 50px; max-width: 50px; }
+.flex-100px { flex: 1 1 100px; max-width: 100px; }
+.flex-142px { flex: 1 1 142px; max-width: 142px; }
+.flex-150px { flex: 1 1 150px; max-width: 150px; }
+.flex-200px { flex: 1 1 200px; max-width: 200px; }
+.flex-220px { flex: 1 1 220px; max-width: 220px; }
+.flex-250px { flex: 1 1 250px; max-width: 250px; }
+.flex-300px { flex: 1 1 300px; max-width: 300px; }
+.flex-400px { flex: 1 1 400px; max-width: 400px; }
+.flex-500px { flex: 1 1 500px; max-width: 500px; }
 
 // Order utilities
 .order-1 { order: 1; }
@@ -841,12 +863,22 @@ class FlexMigrator {
 
       sortedClasses.forEach(({ name, type, value, breakpoint }) => {
         if (type === 'flex') {
-          finalScss += `.${name} { flex: 0 0 ${value}; max-width: ${value}; }\n`;
+          // Use flex: 1 1 for all values (allow grow/shrink)
+          finalScss += `.${name} { flex: 1 1 ${value}; max-width: ${value}; }\n`;
         } else if (type === 'flex-calc') {
           // Generate breakpoint-specific calc class with media query
           const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
           finalScss += `${mediaQuery} {\n`;
-          finalScss += `  .${name} { flex: 0 0 ${value}; max-width: ${value}; }\n`;
+          finalScss += `  .${name} { flex: 1 1 ${value}; max-width: ${value}; }\n`;
+          finalScss += `}\n`;
+        } else if (type === 'gap') {
+          // Custom gap value (no breakpoint)
+          finalScss += `.${name} { gap: ${value}; }\n`;
+        } else if (type === 'gap-breakpoint') {
+          // Breakpoint-specific gap
+          const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
+          finalScss += `${mediaQuery} {\n`;
+          finalScss += `  .${name} { gap: ${value}; }\n`;
           finalScss += `}\n`;
         }
       });
@@ -883,20 +915,25 @@ export function convertFlexValue(value: string | number): string {
 
   const strValue = String(value).trim();
 
+  // If already a flex shorthand (e.g., "1 1 auto"), return as-is
   if (strValue.match(/^\\d+\\s+\\d+\\s+/)) {
     return strValue;
   }
 
-  if (/^\\d+$/.test(strValue)) {
-    return \`0 0 \${strValue}%\`;
+  // Percentage values - use 1 1 (allow grow/shrink)
+  if (/^\\d+%?$/.test(strValue)) {
+    const num = strValue.replace('%', '');
+    return \`1 1 \${num}%\`;
   }
 
+  // Pixel/em/rem/vh/vw values - use 1 1 (allow grow/shrink)
   if (/^\\d+\\s*(px|em|rem|vh|vw)$/.test(strValue)) {
-    return \`0 0 \${strValue}\`;
+    return \`1 1 \${strValue}\`;
   }
 
+  // calc() expressions - use 1 1 (allow grow/shrink)
   if (strValue.startsWith('calc(')) {
-    return \`0 0 \${strValue}\`;
+    return \`1 1 \${strValue}\`;
   }
 
   const keywordMap: { [key: string]: string } = {
