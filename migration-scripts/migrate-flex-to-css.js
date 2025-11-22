@@ -37,6 +37,7 @@ class FlexMigrator {
     this.filesModified = 0;
     this.totalReplacements = 0;
     this.warnings = new Set();
+    this.customClasses = new Set(); // Track custom CSS classes to generate
   }
 
   log(message, level = 'info') {
@@ -104,9 +105,10 @@ class FlexMigrator {
       { regex: /fxHide(?:\.([a-z\-]+))?(?:="((?:(?!\{\{)[^"])*)")?/g, name: 'fxHide' },
 
       // Standalone fxFlex (with or without breakpoint)
-      // Use word boundary to avoid matching inside [fxFlex]
-      { regex: /\sfxFlex\.([a-z\-]+)(?!\s*=)/g, name: 'fxFlex', standaloneWithBreakpoint: true },
-      { regex: /\sfxFlex(?![\[\.\="a-zA-Z])/g, name: 'fxFlex', standalone: true },
+      // MUST come after static directives to avoid matching directives with values
+      // Use positive lookahead to ensure no '=' follows
+      { regex: /\sfxFlex\.([a-z\-]+)(?=\s|>|\/|$)/g, name: 'fxFlex', standaloneWithBreakpoint: true },
+      { regex: /\sfxFlex(?=\s|>|\/|$)/g, name: 'fxFlex', standalone: true },
     ];
 
     patterns.forEach(({ regex, name, dynamic = false, standalone = false, standaloneWithBreakpoint = false, templateString = false }) => {
@@ -251,7 +253,12 @@ class FlexMigrator {
       const num = valueStr.replace('%', '');
       const baseClass = `flex-${num}`;
       const suffix = breakpoint ? `-${breakpoint}` : '';
-      return { classes: [baseClass + suffix], directive: null };
+      const className = baseClass + suffix;
+      // Track non-standard percentage values for dynamic generation
+      if (parseInt(num) > 100 || (parseInt(num) % 5 !== 0 && parseInt(num) !== 33 && parseInt(num) !== 66)) {
+        this.customClasses.add({ name: className, type: 'flex', value: `${num}%` });
+      }
+      return { classes: [className], directive: null };
     }
 
     // Pixel values
@@ -259,11 +266,28 @@ class FlexMigrator {
       const px = valueStr.replace('px', '');
       const baseClass = `flex-${px}px`;
       const suffix = breakpoint ? `-${breakpoint}` : '';
-      return { classes: [baseClass + suffix], directive: null };
+      const className = baseClass + suffix;
+      // Track all pixel values for dynamic generation
+      this.customClasses.add({ name: className, type: 'flex', value: valueStr });
+      return { classes: [className], directive: null };
     }
 
     // Calc or complex
     if (valueStr.includes('calc')) {
+      if (breakpoint) {
+        // Breakpoint-specific calc needs a dynamic CSS class
+        // Create more descriptive class name from calc expression
+        const sanitized = valueStr.replace(/[^a-z0-9]/gi, '');
+        const className = `flex-calc-${breakpoint}-${sanitized}`;
+        this.customClasses.add({
+          name: className,
+          type: 'flex-calc',
+          value: valueStr,
+          breakpoint: breakpoint
+        });
+        return { classes: [className], directive: null };
+      }
+      // No breakpoint - use directive for all screens
       return { classes: [], directive: `[appFlex]="'${valueStr}'"` };
     }
 
@@ -271,12 +295,72 @@ class FlexMigrator {
   }
 
   /**
+   * Convert fxFlexAlign to CSS classes
+   */
+  convertFlexAlign(value, breakpoint = null) {
+    const alignMap = {
+      'start': 'align-self-start',
+      'center': 'align-self-center',
+      'end': 'align-self-end',
+      'baseline': 'align-self-baseline',
+      'stretch': 'align-self-stretch',
+    };
+
+    const cssClass = alignMap[value] || 'align-self-start';
+    const suffix = breakpoint ? `-${breakpoint}` : '';
+    return [cssClass + suffix];
+  }
+
+  /**
+   * Convert fxFlexOffset to CSS classes
+   */
+  convertFlexOffset(value, breakpoint = null) {
+    // Percentage values
+    if (/^\d+%?$/.test(value)) {
+      const num = value.replace('%', '');
+      const suffix = breakpoint ? `-${breakpoint}` : '';
+      return { classes: [`offset-${num}${suffix}`], directive: null };
+    }
+
+    // Dynamic or complex values
+    if (breakpoint) {
+      this.warnings.add(`fxFlexOffset with breakpoint '.${breakpoint}' needs manual review`);
+    }
+    return { classes: [], directive: `[appFlexOffset]="${value}"` };
+  }
+
+  /**
    * Convert fxShow/fxHide to CSS classes
+   * Note: fxShow/fxHide with boolean values and multiple breakpoints is complex
+   * and often requires manual review for proper responsive behavior
    */
   convertShowHide(directive, value, breakpoint) {
-    if (!breakpoint) return [];
-    const prefix = directive.includes('Show') ? 'show' : 'hide';
-    return [`${prefix}-${breakpoint}`];
+    const isShow = directive.includes('Show');
+    const prefix = isShow ? 'show' : 'hide';
+
+    // Handle boolean values
+    if (value === 'false' || value === false) {
+      // Inverted logic: fxShow="false" means hide, fxHide="false" means show
+      const invertedPrefix = isShow ? 'hide' : 'show';
+      if (breakpoint) {
+        this.warnings.add(`${directive}.${breakpoint}="false" requires responsive display utilities - review manually`);
+        return [`${invertedPrefix}-${breakpoint}`];
+      }
+      return [invertedPrefix];
+    }
+
+    if (value === 'true' || value === true || value === '' || !value) {
+      // Normal logic
+      if (breakpoint) {
+        this.warnings.add(`${directive}.${breakpoint} requires responsive display utilities - review manually`);
+        return [`${prefix}-${breakpoint}`];
+      }
+      return [prefix];
+    }
+
+    // Dynamic value - needs directive
+    this.warnings.add(`${directive} with dynamic value needs custom directive`);
+    return [];
   }
 
   /**
@@ -374,6 +458,16 @@ class FlexMigrator {
           const order = this.convertFlexOrder(value, breakpoint);
           order.classes.forEach(cls => newCssClasses.push(cls));
           if (order.directive) directiveBindings.push(order.directive);
+          break;
+
+        case 'fxFlexAlign':
+          this.convertFlexAlign(value, breakpoint).forEach(cls => newCssClasses.push(cls));
+          break;
+
+        case 'fxFlexOffset':
+          const offset = this.convertFlexOffset(value, breakpoint);
+          offset.classes.forEach(cls => newCssClasses.push(cls));
+          if (offset.directive) directiveBindings.push(offset.directive);
           break;
 
         case 'fxShow':
@@ -581,6 +675,13 @@ class FlexMigrator {
 .align-space-around-center { display: flex; justify-content: space-around; align-items: center; }
 .align-space-evenly-center { display: flex; justify-content: space-evenly; align-items: center; }
 
+// Flex item alignment (fxFlexAlign)
+.align-self-start { align-self: flex-start; }
+.align-self-center { align-self: center; }
+.align-self-end { align-self: flex-end; }
+.align-self-baseline { align-self: baseline; }
+.align-self-stretch { align-self: stretch; }
+
 // Gap utilities
 .gap-4 { gap: 4px; }
 .gap-5 { gap: 5px; }
@@ -709,13 +810,58 @@ class FlexMigrator {
 }
 `;
 
+    // Append custom classes if any were collected
+    let finalScss = scss;
+    if (this.customClasses.size > 0) {
+      finalScss += '\n// ===================================\n';
+      finalScss += '// Custom Classes (Dynamically Generated)\n';
+      finalScss += '// ===================================\n\n';
+
+      // Breakpoint media queries
+      const mediaQueries = {
+        'xs': '@media (max-width: 599px)',
+        'sm': '@media (min-width: 600px) and (max-width: 959px)',
+        'md': '@media (min-width: 960px) and (max-width: 1279px)',
+        'lg': '@media (min-width: 1280px) and (max-width: 1919px)',
+        'xl': '@media (min-width: 1920px)',
+        'lt-sm': '@media (max-width: 599px)',
+        'lt-md': '@media (max-width: 959px)',
+        'lt-lg': '@media (max-width: 1279px)',
+        'lt-xl': '@media (max-width: 1919px)',
+        'gt-xs': '@media (min-width: 600px)',
+        'gt-sm': '@media (min-width: 960px)',
+        'gt-md': '@media (min-width: 1280px)',
+        'gt-lg': '@media (min-width: 1920px)',
+      };
+
+      // Convert Set to Array and sort by name
+      const sortedClasses = Array.from(this.customClasses).sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+
+      sortedClasses.forEach(({ name, type, value, breakpoint }) => {
+        if (type === 'flex') {
+          finalScss += `.${name} { flex: 0 0 ${value}; max-width: ${value}; }\n`;
+        } else if (type === 'flex-calc') {
+          // Generate breakpoint-specific calc class with media query
+          const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
+          finalScss += `${mediaQuery} {\n`;
+          finalScss += `  .${name} { flex: 0 0 ${value}; max-width: ${value}; }\n`;
+          finalScss += `}\n`;
+        }
+      });
+    }
+
     if (!this.dryRun) {
       const dir = path.dirname(outputPath);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      fs.writeFileSync(outputPath, scss, 'utf-8');
+      fs.writeFileSync(outputPath, finalScss, 'utf-8');
       this.log(`Generated: ${outputPath}`, 'success');
+      if (this.customClasses.size > 0) {
+        this.log(`  + ${this.customClasses.size} custom classes added`, 'info');
+      }
     } else {
       this.log(`Would generate: ${outputPath}`, 'info');
     }
