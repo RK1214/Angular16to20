@@ -37,7 +37,7 @@ class FlexMigrator {
     this.filesModified = 0;
     this.totalReplacements = 0;
     this.warnings = new Set();
-    this.customClasses = new Set(); // Track custom CSS classes to generate
+    this.customClasses = new Map(); // Track custom CSS classes to generate (using Map for deduplication by key)
   }
 
   log(message, level = 'info') {
@@ -254,9 +254,18 @@ class FlexMigrator {
       const baseClass = `flex-${num}`;
       const suffix = breakpoint ? `-${breakpoint}` : '';
       const className = baseClass + suffix;
-      // Track non-standard percentage values for dynamic generation
-      if (parseInt(num) > 100 || (parseInt(num) % 5 !== 0 && parseInt(num) !== 33 && parseInt(num) !== 66)) {
-        this.customClasses.add({ name: className, type: 'flex', value: `${num}%` });
+
+      // Standard percentage values already in template
+      const standardPercentages = ['10', '20', '25', '30', '33', '40', '50', '60', '66', '70', '75', '80', '90', '100'];
+
+      // Track custom percentage values (not in standard set or with breakpoint)
+      if (!standardPercentages.includes(num) || breakpoint) {
+        this.customClasses.set(className, {
+          name: className,
+          type: breakpoint ? 'flex-breakpoint' : 'flex',
+          value: `${num}%`,
+          breakpoint: breakpoint || null
+        });
       }
       return { classes: [className], directive: null };
     }
@@ -267,8 +276,19 @@ class FlexMigrator {
       const baseClass = `flex-${px}px`;
       const suffix = breakpoint ? `-${breakpoint}` : '';
       const className = baseClass + suffix;
-      // Track all pixel values for dynamic generation
-      this.customClasses.add({ name: className, type: 'flex', value: valueStr });
+
+      // Standard pixel values already in template
+      const standardPixels = ['20', '30', '40', '50', '100', '142', '150', '200', '220', '250', '300', '400', '500'];
+
+      // Track custom pixel values (not in standard set or with breakpoint)
+      if (!standardPixels.includes(px) || breakpoint) {
+        this.customClasses.set(className, {
+          name: className,
+          type: breakpoint ? 'flex-breakpoint' : 'flex',
+          value: `${px}px`,
+          breakpoint: breakpoint || null
+        });
+      }
       return { classes: [className], directive: null };
     }
 
@@ -279,7 +299,7 @@ class FlexMigrator {
         // Create more descriptive class name from calc expression
         const sanitized = valueStr.replace(/[^a-z0-9]/gi, '');
         const className = `flex-calc-${breakpoint}-${sanitized}`;
-        this.customClasses.add({
+        this.customClasses.set(className, {
           name: className,
           type: 'flex-calc',
           value: valueStr,
@@ -381,7 +401,7 @@ class FlexMigrator {
       const standardGaps = ['4', '5', '8', '12', '16', '20', '24', '32', '48'];
       if (!breakpoint && !standardGaps.includes(gapValue)) {
         // Custom gap value - add to custom classes
-        this.customClasses.add({
+        this.customClasses.set(className, {
           name: className,
           type: 'gap',
           value: `${gapValue}px`,
@@ -389,7 +409,7 @@ class FlexMigrator {
         });
       } else if (breakpoint) {
         // Breakpoint-specific gap - always add as custom
-        this.customClasses.add({
+        this.customClasses.set(className, {
           name: className,
           type: 'gap-breakpoint',
           value: `${gapValue}px`,
@@ -856,8 +876,8 @@ class FlexMigrator {
         'gt-lg': '@media (min-width: 1920px)',
       };
 
-      // Convert Set to Array and sort by name
-      const sortedClasses = Array.from(this.customClasses).sort((a, b) =>
+      // Convert Map values to Array and sort by name
+      const sortedClasses = Array.from(this.customClasses.values()).sort((a, b) =>
         a.name.localeCompare(b.name)
       );
 
@@ -865,6 +885,12 @@ class FlexMigrator {
         if (type === 'flex') {
           // Use flex: 1 1 for all values (allow grow/shrink)
           finalScss += `.${name} { flex: 1 1 ${value}; max-width: ${value}; }\n`;
+        } else if (type === 'flex-breakpoint') {
+          // Breakpoint-specific flex (percentage or pixel with breakpoint)
+          const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
+          finalScss += `${mediaQuery} {\n`;
+          finalScss += `  .${name} { flex: 1 1 ${value}; max-width: ${value}; }\n`;
+          finalScss += `}\n`;
         } else if (type === 'flex-calc') {
           // Generate breakpoint-specific calc class with media query
           const mediaQuery = mediaQueries[breakpoint] || '@media (min-width: 0)';
