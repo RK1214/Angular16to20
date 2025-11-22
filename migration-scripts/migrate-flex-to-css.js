@@ -66,25 +66,37 @@ class FlexMigrator {
    */
   extractDirectives(tagContent) {
     const directives = {};
+    // Track ALL original matches for each directive to handle duplicates
+    const allOriginals = [];
 
     // First, extract and preserve the entire class attribute (including template expressions)
     // This regex handles class attributes that may contain {{ }} template expressions
-    const classRegex = /class="([^"]*(?:\{\{(?:[^}]|\}(?!\}))*\}\}[^"]*)*)"/;
-    const classMatch = classRegex.exec(tagContent);
+    // Try double quotes first, then single quotes
+    let classMatch = /class="([^"]*(?:\{\{(?:[^}]|\}(?!\}))*\}\}[^"]*)*)"/.exec(tagContent);
+    if (!classMatch) {
+      classMatch = /class='([^']*(?:\{\{(?:[^}]|\}(?!\}))*\}\}[^']*)*)'/.exec(tagContent);
+    }
     if (classMatch) {
       directives._existingClass = classMatch[1];
       directives._existingClassOriginal = classMatch[0];
     }
 
     // Patterns for all flex directives
+    // Separate patterns for double and single quotes for reliability
     const patterns = [
-      // Template string bindings (must come first) - convert to property bindings
+      // Template string bindings (must come first) - double quotes
       { regex: /fxLayout(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxLayout', templateString: true },
       { regex: /fxLayoutAlign(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxLayoutAlign', templateString: true },
       { regex: /fxLayoutGap(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxLayoutGap', templateString: true },
       { regex: /fxFlex(?:\.([a-z\-]+))?="\{\{([^}]+)\}\}"/g, name: 'fxFlex', templateString: true },
 
-      // Dynamic bindings
+      // Template string bindings - single quotes
+      { regex: /fxLayout(?:\.([a-z\-]+))?='\{\{([^}]+)\}\}'/g, name: 'fxLayout', templateString: true },
+      { regex: /fxLayoutAlign(?:\.([a-z\-]+))?='\{\{([^}]+)\}\}'/g, name: 'fxLayoutAlign', templateString: true },
+      { regex: /fxLayoutGap(?:\.([a-z\-]+))?='\{\{([^}]+)\}\}'/g, name: 'fxLayoutGap', templateString: true },
+      { regex: /fxFlex(?:\.([a-z\-]+))?='\{\{([^}]+)\}\}'/g, name: 'fxFlex', templateString: true },
+
+      // Dynamic bindings - double quotes
       { regex: /\[fxLayout(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxLayout', dynamic: true },
       { regex: /\[fxLayoutAlign(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxLayoutAlign', dynamic: true },
       { regex: /\[fxLayoutGap(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxLayoutGap', dynamic: true },
@@ -93,7 +105,16 @@ class FlexMigrator {
       { regex: /\[fxShow(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxShow', dynamic: true },
       { regex: /\[fxHide(?:\.([a-z\-]+))?\]="([^"]*)"/g, name: 'fxHide', dynamic: true },
 
-      // Static directives (must come after template strings and NOT match {{...}})
+      // Dynamic bindings - single quotes
+      { regex: /\[fxLayout(?:\.([a-z\-]+))?\]='([^']*)'/g, name: 'fxLayout', dynamic: true },
+      { regex: /\[fxLayoutAlign(?:\.([a-z\-]+))?\]='([^']*)'/g, name: 'fxLayoutAlign', dynamic: true },
+      { regex: /\[fxLayoutGap(?:\.([a-z\-]+))?\]='([^']*)'/g, name: 'fxLayoutGap', dynamic: true },
+      { regex: /\[fxFlex(?:\.([a-z\-]+))?\]='([^']*)'/g, name: 'fxFlex', dynamic: true },
+      { regex: /\[fxFlexOrder(?:\.([a-z\-]+))?\]='([^']*)'/g, name: 'fxFlexOrder', dynamic: true },
+      { regex: /\[fxShow(?:\.([a-z\-]+))?\]='([^']*)'/g, name: 'fxShow', dynamic: true },
+      { regex: /\[fxHide(?:\.([a-z\-]+))?\]='([^']*)'/g, name: 'fxHide', dynamic: true },
+
+      // Static directives - double quotes (must NOT match {{...}})
       { regex: /fxLayout(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxLayout' },
       { regex: /fxLayoutAlign(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxLayoutAlign' },
       { regex: /fxLayoutGap(?:\.([a-z\-]+))?="((?:(?!\{\{)[^"])*)"/g, name: 'fxLayoutGap' },
@@ -104,9 +125,19 @@ class FlexMigrator {
       { regex: /fxShow(?:\.([a-z\-]+))?(?:="((?:(?!\{\{)[^"])*)")?/g, name: 'fxShow' },
       { regex: /fxHide(?:\.([a-z\-]+))?(?:="((?:(?!\{\{)[^"])*)")?/g, name: 'fxHide' },
 
+      // Static directives - single quotes (must NOT match {{...}})
+      { regex: /fxLayout(?:\.([a-z\-]+))?='((?:(?!\{\{)[^'])*)'/g, name: 'fxLayout' },
+      { regex: /fxLayoutAlign(?:\.([a-z\-]+))?='((?:(?!\{\{)[^'])*)'/g, name: 'fxLayoutAlign' },
+      { regex: /fxLayoutGap(?:\.([a-z\-]+))?='((?:(?!\{\{)[^'])*)'/g, name: 'fxLayoutGap' },
+      { regex: /fxFlex(?:\.([a-z\-]+))?='((?:(?!\{\{)[^'])*)'/g, name: 'fxFlex' },
+      { regex: /fxFlexOrder(?:\.([a-z\-]+))?='((?:(?!\{\{)[^'])*)'/g, name: 'fxFlexOrder' },
+      { regex: /fxFlexOffset(?:\.([a-z\-]+))?='((?:(?!\{\{)[^'])*)'/g, name: 'fxFlexOffset' },
+      { regex: /fxFlexAlign(?:\.([a-z\-]+))?='((?:(?!\{\{)[^'])*)'/g, name: 'fxFlexAlign' },
+      { regex: /fxShow(?:\.([a-z\-]+))?(?:='((?:(?!\{\{)[^'])*)')?/g, name: 'fxShow' },
+      { regex: /fxHide(?:\.([a-z\-]+))?(?:='((?:(?!\{\{)[^'])*)')?/g, name: 'fxHide' },
+
       // Standalone fxFlex (with or without breakpoint)
       // MUST come after static directives to avoid matching directives with values
-      // Use positive lookahead to ensure no '=' follows
       { regex: /\sfxFlex\.([a-z\-]+)(?=\s|>|\/|$)/g, name: 'fxFlex', standaloneWithBreakpoint: true },
       { regex: /\sfxFlex(?=\s|>|\/|$)/g, name: 'fxFlex', standalone: true },
     ];
@@ -114,55 +145,143 @@ class FlexMigrator {
     patterns.forEach(({ regex, name, dynamic = false, standalone = false, standaloneWithBreakpoint = false, templateString = false }) => {
       let match;
       while ((match = regex.exec(tagContent)) !== null) {
-        const breakpoint = standaloneWithBreakpoint ? match[1] : (match[1] || null);
-        const value = standalone || standaloneWithBreakpoint ? true : (match[2] || true);
+        // Pattern structure:
+        // - Standalone: no capture groups
+        // - StandaloneWithBreakpoint: [1]=breakpoint
+        // - All others: directive(?:\.([a-z\-]+))?='...'
+        //   - [1]=breakpoint (optional, undefined if not present)
+        //   - [2]=value
+        let breakpoint, value;
+
+        if (standalone) {
+          breakpoint = null;
+          value = true;
+        } else if (standaloneWithBreakpoint) {
+          breakpoint = match[1];
+          value = true;
+        } else {
+          // For patterns with optional breakpoint: directive(?:\.([a-z\-]+))?='value'
+          // match[1] = breakpoint (or undefined if no breakpoint)
+          // match[2] = value
+          breakpoint = match[1] || null;
+          value = match[2] || true;
+        }
+
         const key = breakpoint ? `${name}.${breakpoint}` : name;
 
-        directives[key] = {
-          value,
-          isDynamic: dynamic || templateString,
-          isTemplateString: templateString,
-          breakpoint,
-          original: match[0]
-        };
+        // Store ALL original matches for removal later
+        allOriginals.push(match[0]);
+
+        // Store directive - use position to determine which one wins (last in document wins)
+        const matchPosition = match.index;
+
+        if (!directives[key] || (directives[key]._position !== undefined && matchPosition > directives[key]._position)) {
+          directives[key] = {
+            value,
+            isDynamic: dynamic || templateString,
+            isTemplateString: templateString,
+            breakpoint,
+            original: match[0],
+            _position: matchPosition
+          };
+        } else if (!directives[key]._position) {
+          // First match for this key
+          directives[key] = {
+            value,
+            isDynamic: dynamic || templateString,
+            isTemplateString: templateString,
+            breakpoint,
+            original: match[0],
+            _position: matchPosition
+          };
+        }
       }
     });
 
+    // Store all originals for removal
+    directives._allOriginals = allOriginals;
+
     return directives;
+  }
+
+  /**
+   * Normalize directive value (handle boolean/empty values)
+   */
+  normalizeValue(value, defaultValue = '') {
+    if (value === true || value === '' || value === null || value === undefined) {
+      return defaultValue;
+    }
+    return String(value).trim();
   }
 
   /**
    * Convert fxLayout to CSS classes
    */
   convertLayout(value, breakpoint = null) {
-    const layoutMap = {
+    const classes = [];
+    const normalizedValue = this.normalizeValue(value, 'row');
+
+    // Parse direction and wrap from the value
+    // Format can be: "row", "column", "row wrap", "column nowrap", "row-reverse", etc.
+    const parts = normalizedValue.split(/\s+/);
+
+    let direction = 'row'; // default
+    let wrapValue = null;
+
+    // First part is always the direction
+    if (parts[0]) {
+      const directionPart = parts[0].toLowerCase();
+      if (['row', 'column', 'row-reverse', 'column-reverse'].includes(directionPart)) {
+        direction = directionPart;
+      }
+    }
+
+    // Second part (if exists) is the wrap value
+    if (parts[1]) {
+      const wrapPart = parts[1].toLowerCase();
+      if (['wrap', 'nowrap', 'wrap-reverse'].includes(wrapPart)) {
+        wrapValue = wrapPart;
+      }
+    }
+
+    // Generate direction class
+    const directionClassMap = {
       'row': 'flex-row',
       'column': 'flex-column',
       'row-reverse': 'flex-row-reverse',
-      'column-reverse': 'flex-column-reverse',
-      'row wrap': 'flex-row flex-wrap',
-      'column wrap': 'flex-column flex-wrap',
+      'column-reverse': 'flex-column-reverse'
     };
 
-    const classes = [];
-    const baseClass = layoutMap[value] || 'flex-row';
+    const directionClass = directionClassMap[direction] || 'flex-row';
 
     if (breakpoint) {
+      // For breakpoints, add the breakpoint-specific class
       if (breakpoint === 'xs') {
-        if (value.includes('column')) {
-          classes.push('flex-column-xs');
-        } else if (value.includes('row')) {
-          classes.push('flex-row-xs');
-        }
-      }
-      // Add base layout
-      if (value.includes('wrap')) {
-        classes.push(value.includes('row') ? 'flex-row' : 'flex-column');
-      } else if (value === 'row' || value === 'column') {
-        classes.push(value === 'row' ? 'flex-column' : 'flex-row');
+        classes.push(`${directionClass}-xs`);
+      } else {
+        // For other breakpoints, add base opposite direction and breakpoint-specific
+        const oppositeDirection = direction.includes('column') ? 'flex-row' : 'flex-column';
+        classes.push(oppositeDirection);
+        classes.push(`${directionClass}-${breakpoint}`);
       }
     } else {
-      classes.push(baseClass);
+      // No breakpoint - add direction class
+      classes.push(directionClass);
+    }
+
+    // Add wrap class if specified
+    if (wrapValue) {
+      const wrapClassMap = {
+        'wrap': 'flex-wrap',
+        'nowrap': 'flex-nowrap',
+        'wrap-reverse': 'flex-wrap-reverse'
+      };
+
+      const wrapClass = wrapClassMap[wrapValue];
+      if (wrapClass) {
+        const suffix = breakpoint ? `-${breakpoint}` : '';
+        classes.push(wrapClass + suffix);
+      }
     }
 
     return classes;
@@ -173,7 +292,7 @@ class FlexMigrator {
    */
   convertLayoutAlign(value, breakpoint = null) {
     // Normalize the value: trim and handle single values
-    let normalizedValue = value.trim();
+    let normalizedValue = this.normalizeValue(value, 'start stretch');
 
     // If only one value is provided, it's the main axis alignment
     // Default cross axis is 'stretch' in Angular Flex Layout
@@ -323,6 +442,7 @@ class FlexMigrator {
    * Convert fxFlexAlign to CSS classes
    */
   convertFlexAlign(value, breakpoint = null) {
+    const normalizedValue = this.normalizeValue(value, 'start');
     const alignMap = {
       'start': 'align-self-start',
       'center': 'align-self-center',
@@ -331,7 +451,7 @@ class FlexMigrator {
       'stretch': 'align-self-stretch',
     };
 
-    const cssClass = alignMap[value] || 'align-self-start';
+    const cssClass = alignMap[normalizedValue] || 'align-self-start';
     const suffix = breakpoint ? `-${breakpoint}` : '';
     return [cssClass + suffix];
   }
@@ -340,9 +460,11 @@ class FlexMigrator {
    * Convert fxFlexOffset to CSS classes
    */
   convertFlexOffset(value, breakpoint = null) {
+    const normalizedValue = this.normalizeValue(value, '0');
+
     // Percentage values
-    if (/^\d+%?$/.test(value)) {
-      const num = value.replace('%', '');
+    if (/^\d+%?$/.test(normalizedValue)) {
+      const num = normalizedValue.replace('%', '');
       const suffix = breakpoint ? `-${breakpoint}` : '';
       return { classes: [`offset-${num}${suffix}`], directive: null };
     }
@@ -351,134 +473,93 @@ class FlexMigrator {
     if (breakpoint) {
       this.warnings.add(`fxFlexOffset with breakpoint '.${breakpoint}' needs manual review`);
     }
-    return { classes: [], directive: `[appFlexOffset]="${value}"` };
+    return { classes: [], directive: `[appFlexOffset]="${normalizedValue}"` };
   }
 
   /**
-   * Convert fxShow/fxHide directives as a group to handle inverse cases
-   * Example: fxShow + fxShow.xs="false" → hide-xs show-gt-xs
+   * Convert fxShow/fxHide directives as a group to handle ALL inverse cases
+   * Handles both same-type (fxShow + fxShow.xs) and mixed-type (fxShow + fxHide.xs)
+   *
+   * Examples:
+   *   fxShow + fxShow.xs="false" → show hide-xs show-gt-xs
+   *   fxShow + fxHide.xs → show hide-xs show-gt-xs
+   *   fxHide + fxShow.xs → hide show-xs hide-gt-xs
    */
   convertShowHideGroup(directives) {
     const classes = [];
-    const showDirectives = {};
-    const hideDirectives = {};
 
-    // Collect all fxShow and fxHide directives
-    Object.entries(directives).forEach(([key, data]) => {
-      if (key.startsWith('fxShow')) {
-        const breakpoint = data.breakpoint || null;
-        showDirectives[breakpoint || 'base'] = data.value;
-      } else if (key.startsWith('fxHide')) {
-        const breakpoint = data.breakpoint || null;
-        hideDirectives[breakpoint || 'base'] = data.value;
-      }
-    });
-
-    // Helper to check if value means "apply"
+    // Helper functions
     const isTrue = (val) => val === true || val === 'true' || val === '' || !val;
     const isFalse = (val) => val === 'false' || val === false;
 
-    // Process fxShow directives
-    if (Object.keys(showDirectives).length > 0) {
-      const hasBase = 'base' in showDirectives;
-      const baseValue = showDirectives.base;
+    /**
+     * Determine effective visibility for a given directive value
+     * Returns: 'show', 'hide', or null
+     */
+    const getEffectiveVisibility = (directiveName, value) => {
+      const isShowDirective = directiveName.includes('Show');
 
-      if (hasBase && isTrue(baseValue)) {
-        // fxShow (show everywhere by default)
-        classes.push('show');
-
-        // Check for breakpoint-specific false values
-        Object.entries(showDirectives).forEach(([bp, val]) => {
-          if (bp !== 'base' && isFalse(val)) {
-            // fxShow + fxShow.xs="false" → hide on xs, show on larger
-            classes.push(`hide-${bp}`);
-            const complementBreakpoint = this.getComplementBreakpoint(bp);
-            if (complementBreakpoint) {
-              classes.push(`show-${complementBreakpoint}`);
-            }
-            this.warnings.add(`fxShow with fxShow.${bp}="false" creates hide-${bp} - review responsive behavior`);
-          }
-        });
-      } else if (hasBase && isFalse(baseValue)) {
-        // fxShow="false" (hide everywhere by default)
-        classes.push('hide');
-
-        // Check for breakpoint-specific true values
-        Object.entries(showDirectives).forEach(([bp, val]) => {
-          if (bp !== 'base' && isTrue(val)) {
-            // fxShow="false" + fxShow.xs → show on xs, hide on larger
-            classes.push(`show-${bp}`);
-            const complementBreakpoint = this.getComplementBreakpoint(bp);
-            if (complementBreakpoint) {
-              classes.push(`hide-${complementBreakpoint}`);
-            }
-            this.warnings.add(`fxShow="false" with fxShow.${bp} creates show-${bp} - review responsive behavior`);
-          }
-        });
-      } else {
-        // No base, only breakpoint-specific
-        Object.entries(showDirectives).forEach(([bp, val]) => {
-          if (bp !== 'base') {
-            if (isTrue(val)) {
-              classes.push(`show-${bp}`);
-            } else if (isFalse(val)) {
-              classes.push(`hide-${bp}`);
-            }
-          }
-        });
+      if (isTrue(value)) {
+        return isShowDirective ? 'show' : 'hide';
+      } else if (isFalse(value)) {
+        // false inverts: fxShow="false" means hide, fxHide="false" means show
+        return isShowDirective ? 'hide' : 'show';
       }
+      return null;
+    };
+
+    // Step 1: Determine base visibility (from fxShow or fxHide without breakpoint)
+    let baseVisibility = null;
+
+    Object.entries(directives).forEach(([key, data]) => {
+      if ((key === 'fxShow' || key === 'fxHide') && !data.breakpoint) {
+        const visibility = getEffectiveVisibility(key, data.value);
+        if (visibility) {
+          baseVisibility = visibility;
+        }
+      }
+    });
+
+    // Step 2: Collect all breakpoint-specific visibilities
+    const breakpointVisibilities = {}; // { xs: 'show', sm: 'hide', ... }
+
+    Object.entries(directives).forEach(([key, data]) => {
+      if ((key.startsWith('fxShow') || key.startsWith('fxHide')) && data.breakpoint) {
+        const bp = data.breakpoint;
+        const directiveName = key.split('.')[0];
+        const visibility = getEffectiveVisibility(directiveName, data.value);
+
+        if (visibility) {
+          breakpointVisibilities[bp] = visibility;
+        }
+      }
+    });
+
+    // Step 3: Generate classes based on base and breakpoint visibilities
+
+    // Add base visibility class
+    if (baseVisibility) {
+      classes.push(baseVisibility);
     }
 
-    // Process fxHide directives (similar logic but inverted)
-    if (Object.keys(hideDirectives).length > 0) {
-      const hasBase = 'base' in hideDirectives;
-      const baseValue = hideDirectives.base;
+    // Process each breakpoint
+    Object.entries(breakpointVisibilities).forEach(([bp, bpVisibility]) => {
+      // Add the breakpoint-specific class
+      classes.push(`${bpVisibility}-${bp}`);
 
-      if (hasBase && isTrue(baseValue)) {
-        // fxHide (hide everywhere by default)
-        classes.push('hide');
-
-        // Check for breakpoint-specific false values
-        Object.entries(hideDirectives).forEach(([bp, val]) => {
-          if (bp !== 'base' && isFalse(val)) {
-            // fxHide + fxHide.xs="false" → show on xs, hide on larger
-            classes.push(`show-${bp}`);
-            const complementBreakpoint = this.getComplementBreakpoint(bp);
-            if (complementBreakpoint) {
-              classes.push(`hide-${complementBreakpoint}`);
-            }
-            this.warnings.add(`fxHide with fxHide.${bp}="false" creates show-${bp} - review responsive behavior`);
-          }
-        });
-      } else if (hasBase && isFalse(baseValue)) {
-        // fxHide="false" (show everywhere by default)
-        classes.push('show');
-
-        // Check for breakpoint-specific true values
-        Object.entries(hideDirectives).forEach(([bp, val]) => {
-          if (bp !== 'base' && isTrue(val)) {
-            // fxHide="false" + fxHide.xs → hide on xs, show on larger
-            classes.push(`hide-${bp}`);
-            const complementBreakpoint = this.getComplementBreakpoint(bp);
-            if (complementBreakpoint) {
-              classes.push(`show-${complementBreakpoint}`);
-            }
-            this.warnings.add(`fxHide="false" with fxHide.${bp} creates hide-${bp} - review responsive behavior`);
-          }
-        });
-      } else {
-        // No base, only breakpoint-specific
-        Object.entries(hideDirectives).forEach(([bp, val]) => {
-          if (bp !== 'base') {
-            if (isTrue(val)) {
-              classes.push(`hide-${bp}`);
-            } else if (isFalse(val)) {
-              classes.push(`show-${bp}`);
-            }
-          }
-        });
+      // Check if this is an inverse case (breakpoint differs from base)
+      if (baseVisibility && bpVisibility !== baseVisibility) {
+        // Inverse case! Add complement to ensure correct behavior on larger screens
+        const complementBreakpoint = this.getComplementBreakpoint(bp);
+        if (complementBreakpoint) {
+          // Add base visibility for the complement breakpoint
+          classes.push(`${baseVisibility}-${complementBreakpoint}`);
+          this.warnings.add(
+            `Inverse visibility: base=${baseVisibility}, ${bp}=${bpVisibility} - added ${baseVisibility}-${complementBreakpoint}`
+          );
+        }
       }
-    }
+    });
 
     return classes;
   }
@@ -543,12 +624,14 @@ class FlexMigrator {
    * Convert fxLayoutGap to CSS class or directive
    */
   convertGap(value, breakpoint = null) {
+    const normalizedValue = this.normalizeValue(value, '0');
+
     // Check if dynamic (not a simple number or pixel value)
-    if (!value.match(/^\d+\s*px$/) && !/^\d+$/.test(value)) {
-      return { classes: [], directive: `[appGap]="${value}"` };
+    if (!normalizedValue.match(/^\d+\s*px$/) && !/^\d+$/.test(normalizedValue)) {
+      return { classes: [], directive: `[appGap]="${normalizedValue}"` };
     }
 
-    const gapValue = value.replace('px', '').trim();
+    const gapValue = normalizedValue.replace('px', '').trim();
     if (/^\d+$/.test(gapValue)) {
       const suffix = breakpoint ? `-${breakpoint}` : '';
       const className = `gap-${gapValue}${suffix}`;
@@ -583,12 +666,14 @@ class FlexMigrator {
    * Convert fxFlexOrder to CSS class or directive
    */
   convertFlexOrder(value, breakpoint = null) {
-    if (!/^\d+$/.test(value)) {
-      return { classes: [], directive: `[appFlexOrder]="${value}"` };
+    const normalizedValue = this.normalizeValue(value, '0');
+
+    if (!/^\d+$/.test(normalizedValue)) {
+      return { classes: [], directive: `[appFlexOrder]="${normalizedValue}"` };
     }
 
     const suffix = breakpoint ? `-${breakpoint}` : '';
-    return { classes: [`order-${value}${suffix}`], directive: null };
+    return { classes: [`order-${normalizedValue}${suffix}`], directive: null };
   }
 
   /**
@@ -685,12 +770,14 @@ class FlexMigrator {
     });
 
     // Remove all old flex directives but PRESERVE other attributes
+    // Use _allOriginals to handle duplicate attributes
     let result = tagContent;
-    Object.entries(directives).forEach(([key, data]) => {
-      if (!key.startsWith('_')) {
-        result = result.replace(data.original, '');
-      }
-    });
+    if (directives._allOriginals && directives._allOriginals.length > 0) {
+      // Remove ALL matched directives (handles duplicates)
+      directives._allOriginals.forEach(original => {
+        result = result.replace(original, '');
+      });
+    }
 
     // Handle class attribute carefully
     if (directives._existingClassOriginal) {
@@ -877,6 +964,7 @@ class FlexMigrator {
 .flex-column-reverse { display: flex; flex-direction: column-reverse; }
 .flex-wrap { flex-wrap: wrap; }
 .flex-nowrap { flex-wrap: nowrap; }
+.flex-wrap-reverse { flex-wrap: wrap-reverse; }
 
 // Alignment utilities
 // Main axis: start
