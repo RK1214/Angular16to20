@@ -1,0 +1,11 @@
+<div fxShow.xs="false" fxShow fxFlex="100">  - this means it should show in all remaining resolutions except xs
+<div fxShow.xs="true" fxShow="false" fxFlex="100"> - this also not handled properly
+<div class="content-wrapper home" fxFlex="100" fxFlex.sm="calc(100% - 40px)" fxLayout="row wrap" fxLayoutGap.gt-xs="24px">  - this also calc logic should apply only to sm resolution as per directive
+<div fxFlex.xs="100" class="column-wrapper"> this is converted to <div class="column-wrapper flex-100-xs flex-1-x">  - not sure what is  flex-1-x
+  <div class="button-group" fxFlex="299px" fxFlex.xs="100" fxLayout.xs="row wrap" fxLayoutAlign="space-between none">
+  this is converted to    <div class="button-group flex-row-xs flex-row align-start-start flex-299px flex-100-xs flex-1-x">
+Here it should add  flex-299px class definition into _layout.css similarly in all other cases it should add missing classes to _layout.css and also not sure what is flex-1-x, it should not unnecessary classes
+ 
+<div class="promo__icon" fxFlexAlign="center"></div> this is converted to <div class="promo__icon"></div> - this should add the proper alignment classes
+ 
+ <mat-card class="basic" fxFlex="calc(33.33% - 15px)" fxFlex.xs="100" fxFlex.sm="100"> this is converted to       <mat-card class="basic flex-100-xs flex-100-sm flex-1-x flex-1-s" [appFlex]="'calc(33.33% - 15px)'"> - not sure why flex-1-x flex-1-s classes added

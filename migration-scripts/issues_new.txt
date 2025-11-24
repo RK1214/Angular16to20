@@ -1,0 +1,28 @@
+after flex to css node js migration found below errors
+6 cases - each case 1st line is before migration, 2nd line is after migration with issues
+
+
+case1:
+<div fxFlex="30px" class="{{content.sub_content.length === 0 ? 'accordion-caret-hide' : 'accordion-caret'}}"></div>         
+<div class="'accordion-caret'}} 'accordion-caret-hide' 0 : === ? flex-30px {{content.sub_content.length"></div>
+ 
+case2:
+  <div *ngIf="isShowMore" class="flex-container header-content" fxLayout="row wrap" [fxFlex]="reverseWidth" fxFlex.xs>
+   <div class="flex-1 flex-container flex-row flex-wrap header-content" *ngIf="isShowMore"  []="reverseWidth" fxFlex.xs>
+ 
+ case3:
+     <div fxFlex="30px" class="{{content.sub_content.length === 0 ? 'accordion-caret-hide' : 'accordion-caret'}}"></div>
+     <div class="'accordion-caret'}} 'accordion-caret-hide' 0 : === ? flex-30px {{content.sub_content.length"></div>
+ 
+  case6:
+<div class="flex-container {{isSmall ? 'green-small' : 'green'}}" id="{{itemID}}" fxLayout="{{isVertical ? 'column' : 'row wrap'}}">
+<div class="'green'}} 'green-small' : ? flex-container flex-row {{isSmall" id="{{itemID}}" >
+ 
+  case5:
+<div id="{{itemID}}" *ngIf="isVisible" class="flex-item {{ (error_required && isRequired) || error_invalid ? 'field-has-error' : '' }}" fxFlex="100%">
+<div class="&& '' 'field-has-error' (error_required : ? error_invalid flex-1 flex-item isRequired) {{ || }}" id="{{itemID}}" *ngIf="isVisible" >
+
+
+  case6:
+ <div id="{{itemID}}" *ngIf="isVisible" class="flex-item {{ (error_required && isRequired) || error_invalid ? 'field-has-error' : '' }}" fxFlex="100%">
+ <div class="&& '' 'field-has-error' (error_required : ? error_invalid flex-1 flex-item isRequired) {{ || }}" id="{{itemID}}" *ngIf="isVisible" >

@@ -1,0 +1,7 @@
+2 new dropdown behavior is same as select-dropdown
+But for regions - option should be multiline with region name and description and a line separator between the options
+Upon selection only region name should display in the field but not description - remaining all other fetures as per select-dropdown
+
+And for coverage dropdown, options should display left and right sections and upon selection value should be displayed same with dropdown icon to the right - remaining all behavior as per select-dropdown
+
+And one more issue with select-dropdown, selected dropdown option displaying 2 ticks one left to the option, this tick mark is not needed - only the right side one is needed

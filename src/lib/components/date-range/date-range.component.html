@@ -1,0 +1,42 @@
+<div class="date-range-container">
+  <!-- Departure Date Field -->
+  <mat-form-field class="date-field" floatLabel="always">
+    <mat-label>{{ departureLabel }} <mat-icon class="info-icon">info</mat-icon></mat-label>
+    <input
+      matInput
+      [matDatepicker]="departurePicker"
+      [formControl]="departureControl"
+      [min]="minDate"
+      [matDatepickerFilter]="departureDateFilter"
+      (focus)="onDepartureFocus()"
+      [disabled]="disabled"
+      readonly>
+    <mat-datepicker-toggle matSuffix [for]="departurePicker"></mat-datepicker-toggle>
+    <mat-datepicker
+      #departurePicker
+      [dateClass]="dateClass"
+      (opened)="onDepartureOpened()">
+    </mat-datepicker>
+  </mat-form-field>
+
+  <!-- Return Date Field -->
+  <mat-form-field class="date-field" floatLabel="always">
+    <mat-label>{{ returnLabel }} <mat-icon class="info-icon">info</mat-icon></mat-label>
+    <input
+      matInput
+      [matDatepicker]="returnPicker"
+      [formControl]="returnControl"
+      [min]="minReturnDate"
+      [max]="maxReturnDate"
+      [matDatepickerFilter]="returnDateFilter"
+      (focus)="onReturnFocus()"
+      [disabled]="disabled"
+      readonly>
+    <mat-datepicker-toggle matSuffix [for]="returnPicker"></mat-datepicker-toggle>
+    <mat-datepicker
+      #returnPicker
+      [dateClass]="dateClass"
+      (opened)="onReturnOpened()">
+    </mat-datepicker>
+  </mat-form-field>
+</div>

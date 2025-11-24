@@ -6,7 +6,8 @@
 @include mat.elevation-classes();
 @include mat.app-background();
 
-$primary: mat.m2-define-palette(mat.$m2-indigo-palette);
+// Use cyan/blue primary color to match screenshots
+$primary: mat.m2-define-palette(mat.$m2-cyan-palette, 500);
 $accent: mat.m2-define-palette(mat.$m2-pink-palette, A200, A100, A400);
 
 $theme: mat.m2-define-light-theme((
@@ -46,3 +47,135 @@ body {
     border-radius: 0;
   }
 }
+
+/* Form field customizations to match design */
+.mat-mdc-form-field {
+  width: 100%;
+}
+
+/* Remove borders and set white background */
+.mat-mdc-text-field-wrapper {
+  background-color: white !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove the fill background shading */
+.mat-mdc-form-field-flex {
+  background-color: transparent !important;
+}
+
+/* Remove focus background highlight */
+.mdc-text-field--filled:not(.mdc-text-field--disabled) {
+  background-color: transparent !important;
+}
+
+.mdc-text-field--filled:not(.mdc-text-field--disabled):hover {
+  background-color: transparent !important;
+}
+
+.mdc-text-field--filled:not(.mdc-text-field--disabled).mdc-text-field--focused {
+  background-color: transparent !important;
+}
+
+/* Remove the focus state background */
+.mdc-text-field--filled:not(.mdc-text-field--disabled)::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+.mdc-text-field--filled:not(.mdc-text-field--disabled):hover::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+.mdc-text-field--filled:not(.mdc-text-field--disabled).mdc-text-field--focused::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+/* Hide the bottom border line */
+.mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+/* Only show underline */
+.mat-mdc-form-field .mdc-line-ripple {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: rgba(0, 0, 0, 0.12);
+}
+
+.mat-mdc-form-field.mat-focused .mdc-line-ripple {
+  border-bottom-color: #00bcd4;
+  border-bottom-width: 2px;
+}
+
+/* Float labels always */
+.mat-mdc-form-field.mat-mdc-form-field-has-label .mat-mdc-floating-label {
+  color: #999;
+  font-size: 14px;
+}
+
+/* Larger input text */
+.mat-mdc-form-field .mat-mdc-input-element {
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+  background-color: white;
+}
+
+/* Select trigger text size */
+.mat-mdc-select-value {
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Label color when focused */
+.mat-mdc-form-field.mat-focused .mat-mdc-floating-label {
+  color: #00bcd4;
+}
+
+/* Date picker input styling */
+.mat-datepicker-input {
+  font-size: 20px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Chip styling */
+.mat-mdc-chip {
+  font-size: 14px;
+}
+
+/* Info icon styling */
+.info-icon {
+  vertical-align: middle;
+  font-size: 16px !important;
+  width: 16px !important;
+  height: 16px !important;
+  color: #999 !important;
+}
+
+/* Date range highlighting in calendar */
+.mat-calendar-body-selected {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.mat-calendar-body-range-start {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.mat-calendar-body-range-end {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+.mat-calendar-body-in-range {
+  background-color: rgba(244, 67, 54, 0.2) !important;
+}
+
+/* Global dropdown overrides - component-specific styles are in _material-overrides.scss */

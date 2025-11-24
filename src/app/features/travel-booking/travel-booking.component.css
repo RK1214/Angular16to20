@@ -1,0 +1,129 @@
+.travel-booking-container {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 20px;
+}
+
+mat-card {
+  margin-bottom: 24px;
+}
+
+mat-card-title {
+  font-size: 24px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+mat-card-subtitle {
+  font-size: 14px;
+  color: #666;
+}
+
+mat-card-content {
+  padding-top: 24px;
+}
+
+.form-section {
+  margin-bottom: 24px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+
+mat-radio-button {
+  font-size: 16px;
+}
+
+.date-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.date-field {
+  flex: 1;
+  min-width: 250px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.form-actions button {
+  min-width: 140px;
+}
+
+.debug-panel {
+  margin-top: 32px;
+  background-color: #f5f5f5;
+}
+
+.debug-panel pre {
+  background-color: #263238;
+  color: #aed581;
+  padding: 16px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.examples-card {
+  background-color: #f9f9f9;
+}
+
+.feature-list h3 {
+  color: #1976d2;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.feature-list ul {
+  margin: 0;
+  padding-left: 24px;
+}
+
+.feature-list li {
+  margin-bottom: 8px;
+  color: #555;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .travel-booking-container {
+    padding: 12px;
+  }
+
+  .date-row {
+    flex-direction: column;
+  }
+
+  .date-field {
+    width: 100%;
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}

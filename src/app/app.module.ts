@@ -21,13 +21,18 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 
 import { HomeComponent } from './features/home/home.component';
 import { UsersListComponent } from './features/users/users-list.component';
 import { UserFormComponent } from './features/users/user-form.component';
+import { TravelBookingComponent } from './features/travel-booking/travel-booking.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { FlexDirective, GapDirective } from './shared/directives/flex.directive';
+import { SharedModule } from './shared/shared.module';
 
 @NgModule({
   declarations: [
@@ -35,8 +40,7 @@ import { FlexDirective, GapDirective } from './shared/directives/flex.directive'
     HomeComponent,
     UsersListComponent,
     UserFormComponent,
-    FlexDirective,
-    GapDirective
+    TravelBookingComponent
   ],
   bootstrap: [AppComponent],
   imports: [
@@ -57,12 +61,17 @@ import { FlexDirective, GapDirective } from './shared/directives/flex.directive'
     MatSnackBarModule,
     MatTooltipModule,
     MatSelectModule,
-    ReactiveFormsModule
+    MatRadioModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatExpansionModule,
+    ReactiveFormsModule,
+    SharedModule
   ],
   providers: [
     {
       provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
-      useValue: { appearance: 'outline' }
+      useValue: { appearance: 'fill', floatLabel: 'auto' }
     }
   ]
 })

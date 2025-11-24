@@ -1,0 +1,143 @@
+.date-range-container {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.date-field {
+  flex: 1;
+  min-width: 280px;
+}
+
+/* White background, no borders */
+::ng-deep .date-field .mat-mdc-text-field-wrapper {
+  background-color: white !important;
+  padding-bottom: 0;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Remove all hover and focus backgrounds */
+::ng-deep .date-field .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+  background-color: transparent !important;
+}
+
+::ng-deep .date-field .mdc-text-field--filled:not(.mdc-text-field--disabled):hover {
+  background-color: transparent !important;
+}
+
+::ng-deep .date-field .mdc-text-field--filled:not(.mdc-text-field--disabled).mdc-text-field--focused {
+  background-color: transparent !important;
+}
+
+::ng-deep .date-field .mdc-text-field--filled:not(.mdc-text-field--disabled)::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+::ng-deep .date-field .mdc-text-field--filled:not(.mdc-text-field--disabled):hover::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+::ng-deep .date-field .mdc-text-field--filled.mdc-text-field--focused::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+/* Remove ripple and focus overlay but keep underline */
+::ng-deep .date-field .mat-mdc-form-field-focus-overlay {
+  display: none !important;
+}
+
+/* Keep the bottom border visible */
+::ng-deep .date-field .mdc-line-ripple {
+  border-bottom-width: 1px !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+::ng-deep .date-field.mat-focused .mdc-line-ripple {
+  border-bottom-color: #00bcd4 !important;
+  border-bottom-width: 2px !important;
+}
+
+/* Increase space between label and input value */
+::ng-deep .date-field.mat-form-field-has-label .mat-mdc-form-field-infix {
+  padding-top: 28px !important;
+  padding-bottom: 8px !important;
+}
+
+/* Make date values larger and bold */
+::ng-deep .date-field .mat-mdc-input-element {
+  font-size: 22px !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+  background-color: white !important;
+  padding-top: 4px;
+}
+
+/* Label styling - position higher above the value */
+::ng-deep .date-field .mat-mdc-floating-label {
+  color: #999 !important;
+  font-size: 14px !important;
+  top: 18px !important;
+}
+
+::ng-deep .date-field.mat-focused .mat-mdc-floating-label {
+  color: #00bcd4 !important;
+}
+
+::ng-deep .date-field .mat-mdc-floating-label.mdc-floating-label--float-above {
+  top: 18px !important;
+}
+
+.info-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: #999;
+}
+
+/* Date range highlighting in calendar */
+::ng-deep .date-range-start .mat-calendar-body-cell-content {
+  background-color: #f44336 !important;
+  color: white !important;
+  border-radius: 4px 0 0 4px;
+}
+
+::ng-deep .date-range-end .mat-calendar-body-cell-content {
+  background-color: #f44336 !important;
+  color: white !important;
+  border-radius: 0 4px 4px 0;
+}
+
+::ng-deep .date-range-between .mat-calendar-body-cell-content {
+  background-color: rgba(244, 67, 54, 0.2) !important;
+  border-radius: 0;
+}
+
+::ng-deep .date-range-start.date-range-end .mat-calendar-body-cell-content {
+  border-radius: 4px !important;
+}
+
+/* Ensure selected dates are visible */
+::ng-deep .mat-calendar-body-selected {
+  background-color: #f44336 !important;
+  color: white !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .date-range-container {
+    flex-direction: column;
+  }
+
+  .date-field {
+    width: 100%;
+  }
+}

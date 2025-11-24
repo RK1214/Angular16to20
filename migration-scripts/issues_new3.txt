@@ -1,0 +1,7 @@
+one more issue is with fXLayoutAlign, fxLayoutAlign attributes always
+  tranformed to alin-start-start - but based on value it should be dynamic
+  class
+  
+  other issue iswith appFlex is, in an html if there are 2 appFlex elements with calc values, then first directive is not setting the inline styles
+
+  and another issue with fxShow.xs = false and fxShow --> this means we should show in all screens except xs, show it should add fx-show-xs fx-hide-gt-xs and the script should handle vice versa cases also

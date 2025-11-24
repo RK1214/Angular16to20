@@ -1,0 +1,36 @@
+<mat-form-field class="autocomplete-input">
+  <mat-label>{{ label }}</mat-label>
+
+  <input
+    matInput
+    [formControl]="inputControl"
+    [matAutocomplete]="auto"
+    [placeholder]="placeholder"
+    (focus)="onFocus()"
+    [disabled]="disabled"
+    [required]="required">
+
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    [displayWith]="displayFn"
+    class="autocomplete-panel">
+
+    <mat-option
+      *ngFor="let option of filteredOptions$ | async"
+      [value]="option.label"
+      [class.selected-option]="isSelected(option)"
+      (click)="onOptionSelected(option)">
+      <span class="option-text" [class.bold-selected]="isSelected(option)">
+        {{ option.label }}
+      </span>
+      <mat-icon *ngIf="isSelected(option)" class="check-icon">check</mat-icon>
+    </mat-option>
+
+    <mat-option *ngIf="(filteredOptions$ | async)?.length === 0" disabled>
+      No results found
+    </mat-option>
+  </mat-autocomplete>
+
+  <mat-hint *ngIf="hint">{{ hint }}</mat-hint>
+  <mat-error *ngIf="errorMessage">{{ errorMessage }}</mat-error>
+</mat-form-field>

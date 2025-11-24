@@ -1,0 +1,159 @@
+/* Multi-select autocomplete container */
+.multi-select-autocomplete {
+  width: 100%;
+}
+
+/* Remove hover and focus backgrounds */
+::ng-deep .multi-select-autocomplete .mdc-text-field--filled {
+  background-color: transparent !important;
+}
+
+::ng-deep .multi-select-autocomplete .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+  background-color: transparent !important;
+}
+
+::ng-deep .multi-select-autocomplete .mdc-text-field--filled:not(.mdc-text-field--disabled):hover {
+  background-color: transparent !important;
+}
+
+::ng-deep .multi-select-autocomplete .mdc-text-field--filled:not(.mdc-text-field--disabled).mdc-text-field--focused {
+  background-color: transparent !important;
+}
+
+::ng-deep .multi-select-autocomplete .mdc-text-field--filled:not(.mdc-text-field--disabled)::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+::ng-deep .multi-select-autocomplete .mdc-text-field--filled:not(.mdc-text-field--disabled):hover::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+::ng-deep .multi-select-autocomplete .mdc-text-field--filled:not(.mdc-text-field--disabled).mdc-text-field--focused::before {
+  background-color: transparent !important;
+  opacity: 0 !important;
+}
+
+/* Remove background from form field flex */
+::ng-deep .multi-select-autocomplete .mat-mdc-form-field-flex {
+  background-color: transparent !important;
+}
+
+/* Remove focus overlay */
+::ng-deep .multi-select-autocomplete .mat-mdc-form-field-focus-overlay {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+/* Chip grid styling */
+::ng-deep .multi-select-autocomplete .mat-mdc-chip-grid {
+  margin: 0;
+  padding-top: 4px;
+}
+
+/* Chip set */
+::ng-deep .multi-select-autocomplete .mat-mdc-chip-set {
+  margin: 0;
+}
+
+/* Input inside chip grid */
+::ng-deep .multi-select-autocomplete .chip-input {
+  min-width: 120px;
+  flex: 1;
+}
+
+/* Selected chips styling */
+.selected-chip {
+  background-color: #5a6268;
+  color: white;
+  font-size: 14px;
+  margin: 4px;
+}
+
+.selected-chip button[matChipRemove] {
+  color: white;
+  opacity: 0.8;
+}
+
+.selected-chip button[matChipRemove]:hover {
+  opacity: 1;
+}
+
+.selected-chip mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Autocomplete panel */
+.multi-select-panel {
+  max-height: 400px;
+}
+
+/* Option group label */
+::ng-deep .multi-select-panel .mat-mdc-optgroup-label {
+  background-color: #f5f5f5;
+  color: #666;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Autocomplete options */
+.autocomplete-option {
+  font-size: 15px;
+  padding: 12px 16px;
+  min-height: 48px;
+}
+
+::ng-deep .multi-select-panel .mat-mdc-option {
+  min-height: 48px;
+}
+
+::ng-deep .multi-select-panel .mat-mdc-option .mdc-list-item__primary-text {
+  font-size: 15px;
+  color: #333;
+}
+
+::ng-deep .multi-select-panel .mat-mdc-option:hover {
+  background-color: #f5f5f5;
+}
+
+
+/* Scrollbar for dropdown */
+::ng-deep .multi-select-panel .mat-mdc-autocomplete-panel {
+  max-height: 400px;
+}
+
+::ng-deep .mat-mdc-autocomplete-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+::ng-deep .mat-mdc-autocomplete-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::ng-deep .mat-mdc-autocomplete-panel::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+::ng-deep .mat-mdc-autocomplete-panel::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .selected-chip {
+    font-size: 13px;
+    margin: 2px;
+  }
+
+  .autocomplete-option {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+}

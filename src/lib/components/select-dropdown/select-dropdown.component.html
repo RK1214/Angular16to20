@@ -1,0 +1,25 @@
+<mat-form-field class="select-dropdown" floatLabel="always">
+  <mat-label>{{ label }} <mat-icon class="info-icon">info</mat-icon></mat-label>
+
+  <mat-select
+    [(value)]="selectedValue"
+    (selectionChange)="onSelectionChange($event.value)"
+    (focus)="onFocus()"
+    [disabled]="disabled"
+    [required]="required"
+    [hideSingleSelectionIndicator]="true">
+
+    <mat-option
+      *ngFor="let option of options"
+      [value]="option.value"
+      [class.selected-option]="isSelected(option.value)">
+      <span class="option-text" [class.bold-selected]="isSelected(option.value)">
+        {{ option.label }}
+      </span>
+      <mat-icon *ngIf="isSelected(option.value)" class="check-icon">check</mat-icon>
+    </mat-option>
+  </mat-select>
+
+  <mat-hint *ngIf="hint">{{ hint }}</mat-hint>
+  <mat-error *ngIf="errorMessage">{{ errorMessage }}</mat-error>
+</mat-form-field>

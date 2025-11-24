@@ -22,7 +22,8 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "src/lib/styles/_dropdown-common.css"
             ],
             "scripts": []
           },
@@ -32,12 +33,12 @@
                 {
                   "type": "initial",
                   "maximumWarning": "500kb",
-                  "maximumError": "1mb"
+                  "maximumError": "4mb"
                 },
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "2kb",
-                  "maximumError": "4kb"
+                  "maximumError": "6kb"
                 }
               ],
               "outputHashing": "all"

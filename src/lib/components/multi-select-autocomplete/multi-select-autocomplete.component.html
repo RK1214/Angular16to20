@@ -1,0 +1,80 @@
+<mat-form-field [appearance]="appearance" class="multi-select-autocomplete">
+  <mat-label>{{ label }}</mat-label>
+
+  <!-- Selected items as chips -->
+  <mat-chip-grid #chipGrid>
+    <mat-chip-row
+      *ngFor="let item of selectedItems"
+      [removable]="!disabled"
+      (removed)="removeItem(item)"
+      class="selected-chip">
+      {{ item.label }}
+      <button matChipRemove *ngIf="!disabled" [attr.aria-label]="'Remove ' + item.label">
+        <mat-icon>cancel</mat-icon>
+      </button>
+    </mat-chip-row>
+
+    <!-- Input for autocomplete -->
+    <input
+      matInput
+      #input
+      [placeholder]="selectedItems.length === 0 ? placeholder : ''"
+      [formControl]="searchControl"
+      [matChipInputFor]="chipGrid"
+      [matAutocomplete]="auto"
+      (focus)="onInputFocus()"
+      [disabled]="disabled"
+      class="chip-input"
+    />
+  </mat-chip-grid>
+
+  <!-- Hint text -->
+  <mat-hint *ngIf="hint && !maxSelectionReached">{{ hint }}</mat-hint>
+
+  <!-- Max selection error -->
+  <mat-error *ngIf="maxSelectionReached">
+    {{ maxSelectionError }} ({{ selectedItems.length }}/{{ maxSelection }})
+  </mat-error>
+
+  <!-- Custom error message -->
+  <mat-error *ngIf="errorMessage && !maxSelectionReached">{{ errorMessage }}</mat-error>
+
+  <!-- Autocomplete panel -->
+  <mat-autocomplete
+    #auto="matAutocomplete"
+    (optionSelected)="onOptionSelected($event)"
+    [displayWith]="getDisplayValue.bind(this)"
+    class="multi-select-panel">
+
+    <ng-container *ngIf="filteredOptions$ | async as filtered">
+      <!-- Grouped options -->
+      <ng-container *ngIf="isGrouped(filtered)">
+        <ng-container *ngFor="let group of filtered">
+          <mat-optgroup [label]="group.name" *ngIf="group.options.length > 0">
+            <mat-option
+              *ngFor="let option of group.options"
+              [value]="option"
+              class="autocomplete-option">
+              {{ option.label }}
+            </mat-option>
+          </mat-optgroup>
+        </ng-container>
+      </ng-container>
+
+      <!-- Flat options -->
+      <ng-container *ngIf="!isGrouped(filtered)">
+        <mat-option
+          *ngFor="let option of filtered"
+          [value]="option"
+          class="autocomplete-option">
+          {{ option.label }}
+        </mat-option>
+      </ng-container>
+
+      <!-- No results message -->
+      <mat-option *ngIf="filtered.length === 0" disabled>
+        No results found
+      </mat-option>
+    </ng-container>
+  </mat-autocomplete>
+</mat-form-field>

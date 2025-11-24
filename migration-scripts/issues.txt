@@ -1,0 +1,52 @@
+Issues observed are 
+1) some times flex.xs directive on html tag is converted as class="flex-1".xs - this is wrong
+2) multiple class tags are getting added - means class="exisiting-class" class="flex-migration-one" - all classes should be combined with one class attribute with spaces
+3) And observed breaking of html syntax while migrating angular flex
+4) Few scenarios are not covered - added sample flex usage as below
+
+
+div class="flex-container" fxLayout="row" fxLayout.xs="column" fxFlex>
+          <div class="header-title" [fxFlex]="flexWidth" fxFlex.xs fxLayout="row">
+            <div fxFlex>{{content.title}}</div>
+            <div fxFlex="30px" class="accordion-caret"></div>
+          </div>
+          <div fxFlex="{{ isShowMore ? '20px' : '' }}" fxHide.xs></div>
+          <div *ngIf="isShowMore" class="flex-container header-content" fxLayout="row wrap" [fxFlex]="reverseWidth" fxFlex.xs>
+            <div class="flex-item content-item" fxFlex *ngFor="let range of content.range">
+              <div>{{ range.range }}</div>
+            </div>
+          </div>
+        </div>
+ 
+<div *ngIf="isShowMore" class="flex-container content-content" fxLayout="row wrap"  fxFlex="50" fxFlex.xs>
+            <div class="flex-item content-wrap" fxFlex *ngFor="let sbrange of sb.range">
+              <div>{{ sbrange.range }}</div>
+            </div>
+          </div>
+ 
+<div *ngIf="isShowMore" class="flex-container header-content" fxLayout="row wrap" [fxFlex]="reverseWidth" fxFlex.xs>
+            <div class="flex-item content-item" fxFlex *ngFor="let range of content.range">
+              <div>{{ range.range }}</div>
+            </div>
+          </div>
+ 
+<div *ngIf="isShowMore" class="flex-container content-content" fxLayout="row wrap"  fxFlex="50" fxFlex.xs></div>
+ 
+<div fxLayout="row" fxLayoutAlign="space-between center" fxLayout="row wrap" fxFlex>
+ 
+<div fxFlex fxLayoutAlign="start center">
+ 
+<div class="red-box" fxLayout="row" fxLayoutAlign="space-between center" fxLayout.xs="row wrap">
+ 
+<div fxLayout="row wrap" class="auto__header" fxFlex="100" fxLayoutGap="5px">
+ 
+<div class="content-wrapper" fxFlex="100" fxFlex.sm="calc(100% - 40px)" fxLayout="row wrap" fxLayoutGap.gt-xs="24px">
+ 
+<div fxFlex="{{ isShowMore ? '20px' : '' }}" fxHide.xs></div>
+ 
+<div fxFlex></div>
+ 
+<div class="logo" fxShow.xs fxHide.gt-xs fxFlex="100">
+ 
+<div fxFlex="142px" fxFlex.xs="100%" fxFlexOrder="2" fxFlexOrder.xs="1">
+    <div class="flex-container" fxLayout="{{ testLayout == 'horizontal' ? 'row' : 'row wrap'}}"

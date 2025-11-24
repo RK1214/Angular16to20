@@ -1,0 +1,7 @@
+Issue 1: after conversion, still fxLayout attribute is there
+<test-element fxLayout="row" fxLayoutAlign="space-between center" fxLayout="row wrap" fxFlex></test-element>
+ <test-element class="flex-row flex-wrap align-space-between-center flex-1" fxLayout="row"></test-element>
+ 
+Issue2: its not converted at all
+  <div class="container" fxLayout='row wrap'>
+<div class="container" fxLayout='row wrap'>

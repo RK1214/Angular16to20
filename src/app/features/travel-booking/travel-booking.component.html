@@ -1,0 +1,204 @@
+<div class="travel-booking-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Travel Insurance Booking - New Components Demo</mat-card-title>
+      <mat-card-subtitle>Showcasing all new Angular Material 20 form components</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="travelForm" (ngSubmit)="onSubmit()">
+
+        <!-- Trip Type Radio Buttons -->
+        <div class="form-section">
+          <mat-radio-group formControlName="tripType" class="radio-group">
+            <mat-radio-button value="single" color="primary">Single Trip</mat-radio-button>
+            <mat-radio-button value="annual" color="primary">Annual Multi-Trip</mat-radio-button>
+          </mat-radio-group>
+        </div>
+
+        <!-- Destination Multi-Select Autocomplete -->
+        <div class="form-section">
+          <app-multi-select-autocomplete
+            label="Destination(s)"
+            placeholder="Select destination(s)"
+            [groupedOptions]="destinations"
+            [required]="true"
+            hint="You can select multiple destinations"
+            [errorMessage]="getDestinationError()"
+            formControlName="destinations">
+          </app-multi-select-autocomplete>
+        </div>
+
+        <!-- NEW: Date Range Component -->
+        <div class="form-section">
+          <app-date-range
+            departureLabel="Departure Date"
+            returnLabel="Return Date"
+            [defaultRangeDays]="4"
+            [maxRangeDays]="80"
+            formControlName="dateRange">
+          </app-date-range>
+        </div>
+
+        <!-- NEW: Multiline Select Dropdown for Regions -->
+        <div class="form-section">
+          <app-multiline-select-dropdown
+            label="Regions"
+            [options]="regions"
+            [defaultValue]="'region4'"
+            hint="Select your travel region"
+            formControlName="region">
+          </app-multiline-select-dropdown>
+        </div>
+
+        <!-- NEW: Split Select Dropdown for Coverage -->
+        <div class="form-section">
+          <app-split-select-dropdown
+            label="Coverage"
+            [options]="coverageOptions"
+            [defaultValue]="'5000'"
+            hint="Select coverage amount"
+            formControlName="coverage">
+          </app-split-select-dropdown>
+        </div>
+
+        <!-- NEW: Select Dropdown Component for Cover Type -->
+        <div class="form-section">
+          <app-select-dropdown
+            label="Cover Type"
+            [options]="coverTypes"
+            [defaultValue]="'individual'"
+            formControlName="coverType">
+          </app-select-dropdown>
+        </div>
+
+        <!-- NEW: Nationality Autocomplete Input Component -->
+        <div class="form-section">
+          <app-autocomplete-input
+            label="Nationality"
+            placeholder=""
+            [options]="nationalities"
+            hint="Start typing or select from dropdown"
+            formControlName="nationality">
+          </app-autocomplete-input>
+        </div>
+
+        <!-- Activities Multi-Select with Max Selection -->
+        <div class="form-section">
+          <app-multi-select-autocomplete
+            label="Activities (Optional)"
+            placeholder="Select up to 3 activities"
+            [options]="activityTypes"
+            [multiple]="true"
+            [maxSelection]="3"
+            maxSelectionError="You can only select up to 3 activities"
+            hint="Choose your planned activities (maximum 3)"
+            formControlName="activities">
+          </app-multi-select-autocomplete>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="travelForm.invalid">
+            Submit Booking
+          </button>
+          <button
+            mat-raised-button
+            type="button"
+            (click)="onReset()">
+            Reset Form
+          </button>
+        </div>
+
+        <!-- Form Debug Info -->
+        <mat-expansion-panel class="debug-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Debug: Form Values
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <pre>{{ travelForm.value | json }}</pre>
+          <div>
+            <strong>Form Valid:</strong> {{ travelForm.valid }}<br>
+            <strong>Form Touched:</strong> {{ travelForm.touched }}<br>
+            <strong>Form Dirty:</strong> {{ travelForm.dirty }}
+          </div>
+        </mat-expansion-panel>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- New Components Features Section -->
+  <mat-card class="examples-card">
+    <mat-card-header>
+      <mat-card-title>New Component Features</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="feature-list">
+        <h3>1. Date Range Component:</h3>
+        <ul>
+          <li>Default range of 4 days from today</li>
+          <li>Visual range highlighting in calendar (red start/end, light red between)</li>
+          <li>Return date cannot be before departure date</li>
+          <li>Max range of 80 days (configurable)</li>
+          <li>Calendar opens to current selection month</li>
+          <li>Fill appearance with floating label</li>
+        </ul>
+
+        <h3>2. Multiline Select Dropdown (Regions):</h3>
+        <ul>
+          <li>Options display region name and description in multiline format</li>
+          <li>Line separator between options</li>
+          <li>Only region name displayed in trigger (not description)</li>
+          <li>Selected option shown bold with checkmark on right</li>
+          <li>Hover effect on options</li>
+          <li>Fill appearance with floating label</li>
+        </ul>
+
+        <h3>3. Split Select Dropdown (Coverage):</h3>
+        <ul>
+          <li>Options display left (coverage) and right (price) sections</li>
+          <li>Both sections displayed in trigger when selected</li>
+          <li>Selected option shown bold with checkmark on right</li>
+          <li>Hover effect on options</li>
+          <li>Fill appearance with floating label</li>
+        </ul>
+
+        <h3>4. Select Dropdown (Cover Type):</h3>
+        <ul>
+          <li>Non-editable dropdown (user can't type)</li>
+          <li>Default value pre-selected (Individual)</li>
+          <li>Single selection only</li>
+          <li>Selected option shown bold with checkmark</li>
+          <li>Hover effect on options</li>
+          <li>Fill appearance with floating label</li>
+        </ul>
+
+        <h3>5. Autocomplete Input (Nationality):</h3>
+        <ul>
+          <li>User can filter by typing OR select from dropdown</li>
+          <li>Can enter custom value without dropdown selection</li>
+          <li>Starts empty (no default value)</li>
+          <li>Single selection</li>
+          <li>Selected option bold with checkmark when dropdown reopened</li>
+          <li>Hover effect on options</li>
+          <li>Fill appearance with floating label</li>
+        </ul>
+
+        <h3>6. Multi-Select Autocomplete (Destinations & Activities):</h3>
+        <ul>
+          <li>Multiple selections as chips</li>
+          <li>Search and filter functionality</li>
+          <li>Grouped options (Destinations)</li>
+          <li>Max selection limit (Activities - 3 max)</li>
+          <li>Fill appearance with floating label</li>
+        </ul>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,26 @@
+for all the form field components float option shoud be float with appearance fill - please update previous mutlti select components
+
+Below are the new componenets - all are shared compoenents like earlier multiselect
+comonents names shoud be genric
+
+date range compoenets with angular material 20
+1) data range component - it should select dates from today with default range to 4
+2) Upon opening as highlighted in images it should select departure date and return date
+3) after opening departure date it should display range with start visible in calender similarly for return date with return date visible in calender
+4) Based on departure date selection, return date user can't select before that, selection should be disabled and return date user can select max upto 80 days (should be configurable) from the departure date
+
+cover types - its a select component
+1) user can't keyin
+2) it should display default value 
+3) user can select only one value
+4) selected option should be bold with tick mark
+5) on mouse hover on option it should add some background to the option
+
+
+Nationality dropdown
+1) user can filter by key in or enter direct value withour selection from dropdown
+2) initially it should be empty
+3) user can select only one value
+4) selected option should be bold with tick mark upon opening dropdown
+5) on mouse hover on option it should add some background to the option
+
