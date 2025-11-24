@@ -364,6 +364,14 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
 
   openInfoDialog(): void {
     if (this.showInfoIcon && this.infoMessage) {
+      // Clear any pending blur timeout to prevent error from showing
+      if (this.blurTimeout) {
+        clearTimeout(this.blurTimeout);
+        this.blurTimeout = null;
+      }
+      // Keep focused state to prevent error display
+      this.isFocused = true;
+
       this.dialog.open(InfoDialogComponent, {
         width: '500px',
         data: {

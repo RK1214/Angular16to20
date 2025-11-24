@@ -14,12 +14,12 @@
 
     <mat-option
       *ngFor="let option of options"
-      [value]="option.value"
-      [class.selected-option]="isSelected(option.value)">
-      <span class="option-text" [class.bold-selected]="isSelected(option.value)">
+      [value]="option"
+      [class.selected-option]="isSelected(option)">
+      <span class="option-text" [class.bold-selected]="isSelected(option)">
         {{ option.label }}
       </span>
-      <mat-icon *ngIf="isSelected(option.value)" class="check-icon">check</mat-icon>
+      <mat-icon *ngIf="isSelected(option)" class="check-icon">check</mat-icon>
     </mat-option>
   </mat-select>
 

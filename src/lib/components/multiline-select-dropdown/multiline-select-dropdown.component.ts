@@ -34,21 +34,21 @@ export class MultilineSelectDropdownComponent implements ControlValueAccessor {
   @Input() infoTitle: string = 'Information';
   @Input() infoMessage: string = '';
 
-  selectedValue: any = null;
+  selectedValue: MultilineSelectOption | null = null;
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
   constructor(private dialog: MatDialog) {}
 
-  onSelectionChange(value: any): void {
-    this.selectedValue = value;
-    this.onChange(value);
+  onSelectionChange(option: MultilineSelectOption): void {
+    this.selectedValue = option;
+    this.onChange(option);
     this.onTouched();
   }
 
-  isSelected(value: any): boolean {
-    return this.selectedValue === value;
+  isSelected(option: MultilineSelectOption): boolean {
+    return this.selectedValue?.value === option.value;
   }
 
   onFocus(): void {
@@ -56,8 +56,7 @@ export class MultilineSelectDropdownComponent implements ControlValueAccessor {
   }
 
   getSelectedLabel(): string {
-    const selectedOption = this.options.find(opt => opt.value === this.selectedValue);
-    return selectedOption ? selectedOption.label : '';
+    return this.selectedValue ? this.selectedValue.label : '';
   }
 
   openInfoDialog(): void {
@@ -74,7 +73,24 @@ export class MultilineSelectDropdownComponent implements ControlValueAccessor {
 
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    this.selectedValue = value !== null && value !== undefined ? value : this.defaultValue;
+    if (value !== null && value !== undefined) {
+      // If value is already an object, use it directly
+      if (typeof value === 'object' && value.hasOwnProperty('value')) {
+        this.selectedValue = value;
+      } else {
+        // Otherwise, find the option by value
+        this.selectedValue = this.options.find(opt => opt.value === value) || null;
+      }
+    } else if (this.defaultValue !== null && this.defaultValue !== undefined) {
+      // Handle default value
+      if (typeof this.defaultValue === 'object' && this.defaultValue.hasOwnProperty('value')) {
+        this.selectedValue = this.defaultValue;
+      } else {
+        this.selectedValue = this.options.find(opt => opt.value === this.defaultValue) || null;
+      }
+    } else {
+      this.selectedValue = null;
+    }
   }
 
   registerOnChange(fn: any): void {

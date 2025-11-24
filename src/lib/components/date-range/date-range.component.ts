@@ -27,6 +27,7 @@ export class DateRangeComponent implements OnInit, ControlValueAccessor {
   @Input() returnLabel: string = 'Return Date';
   @Input() defaultRangeDays: number = 4;
   @Input() maxRangeDays: number = 80;
+  @Input() maxDepartureDays: number = 365; // Maximum days from today for departure date selection
   @Input() minDate: Date = new Date();
   @Input() disabled: boolean = false;
   @Input() showInfoIcon: boolean = false;
@@ -149,7 +150,19 @@ export class DateRangeComponent implements OnInit, ControlValueAccessor {
     const minDate = new Date(this.minDate);
     minDate.setHours(0, 0, 0, 0);
 
-    return inputDate >= minDate;
+    // Check minimum date
+    if (inputDate < minDate) {
+      return false;
+    }
+
+    // Check maximum departure date (today + maxDepartureDays)
+    const maxDate = new Date(minDate);
+    maxDate.setDate(minDate.getDate() + this.maxDepartureDays);
+    if (inputDate > maxDate) {
+      return false;
+    }
+
+    return true;
   };
 
   // Custom date class to highlight the range

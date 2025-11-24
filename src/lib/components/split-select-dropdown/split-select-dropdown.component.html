@@ -21,17 +21,17 @@
 
     <mat-option
       *ngFor="let option of options"
-      [value]="option.value"
-      [class.selected-option]="isSelected(option.value)">
+      [value]="option"
+      [class.selected-option]="isSelected(option)">
       <div class="option-split-content">
-        <span class="option-left" [class.bold-selected]="isSelected(option.value)">
+        <span class="option-left" [class.bold-selected]="isSelected(option)">
           {{ option.leftLabel }}
         </span>
-        <span class="option-right" [class.bold-selected]="isSelected(option.value)">
+        <span class="option-right" [class.bold-selected]="isSelected(option)">
           {{ option.rightLabel }}
         </span>
       </div>
-      <mat-icon *ngIf="isSelected(option.value)" class="check-icon">check</mat-icon>
+      <mat-icon *ngIf="isSelected(option)" class="check-icon">check</mat-icon>
     </mat-option>
   </mat-select>
 

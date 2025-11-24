@@ -34,21 +34,21 @@ export class SplitSelectDropdownComponent implements ControlValueAccessor {
   @Input() infoTitle: string = 'Information';
   @Input() infoMessage: string = '';
 
-  selectedValue: any = null;
+  selectedValue: SplitSelectOption | null = null;
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
   constructor(private dialog: MatDialog) {}
 
-  onSelectionChange(value: any): void {
-    this.selectedValue = value;
-    this.onChange(value);
+  onSelectionChange(option: SplitSelectOption): void {
+    this.selectedValue = option;
+    this.onChange(option);
     this.onTouched();
   }
 
-  isSelected(value: any): boolean {
-    return this.selectedValue === value;
+  isSelected(option: SplitSelectOption): boolean {
+    return this.selectedValue?.value === option.value;
   }
 
   onFocus(): void {
@@ -56,7 +56,7 @@ export class SplitSelectDropdownComponent implements ControlValueAccessor {
   }
 
   getSelectedOption(): SplitSelectOption | undefined {
-    return this.options.find(opt => opt.value === this.selectedValue);
+    return this.selectedValue || undefined;
   }
 
   openInfoDialog(): void {
@@ -73,7 +73,24 @@ export class SplitSelectDropdownComponent implements ControlValueAccessor {
 
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    this.selectedValue = value !== null && value !== undefined ? value : this.defaultValue;
+    if (value !== null && value !== undefined) {
+      // If value is already an object, use it directly
+      if (typeof value === 'object' && value.hasOwnProperty('value')) {
+        this.selectedValue = value;
+      } else {
+        // Otherwise, find the option by value
+        this.selectedValue = this.options.find(opt => opt.value === value) || null;
+      }
+    } else if (this.defaultValue !== null && this.defaultValue !== undefined) {
+      // Handle default value
+      if (typeof this.defaultValue === 'object' && this.defaultValue.hasOwnProperty('value')) {
+        this.selectedValue = this.defaultValue;
+      } else {
+        this.selectedValue = this.options.find(opt => opt.value === this.defaultValue) || null;
+      }
+    } else {
+      this.selectedValue = null;
+    }
   }
 
   registerOnChange(fn: any): void {

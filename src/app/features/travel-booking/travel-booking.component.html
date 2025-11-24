@@ -39,9 +39,10 @@
             returnLabel="Return Date"
             [defaultRangeDays]="4"
             [maxRangeDays]="80"
+            [maxDepartureDays]="365"
             [showInfoIcon]="true"
             infoTitle="About Travel Dates"
-            infoMessage="Select your departure and return dates for your trip. The return date must be on or after the departure date, with a maximum trip duration of 80 days. The calendar will highlight your selected date range in red."
+            infoMessage="Select your departure and return dates for your trip. You can select departure dates up to 365 days in advance. The return date must be on or after the departure date, with a maximum trip duration of 80 days. The calendar will highlight your selected date range in red."
             formControlName="dateRange">
           </app-date-range>
         </div>
