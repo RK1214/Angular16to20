@@ -20,11 +20,14 @@
         <div class="form-section">
           <app-multi-select-autocomplete
             label="Destination(s)"
-            placeholder="Select destination(s)"
             [groupedOptions]="destinations"
             [required]="true"
+            [maxSelection]="5"
             hint="You can select multiple destinations"
             [errorMessage]="getDestinationError()"
+            [showInfoIcon]="true"
+            infoTitle="About Destinations"
+            infoMessage="Select up to 5 travel destinations for your trip. You can choose from popular destinations or browse all available options. Multiple selections help us provide comprehensive coverage for your entire journey."
             formControlName="destinations">
           </app-multi-select-autocomplete>
         </div>
@@ -36,6 +39,9 @@
             returnLabel="Return Date"
             [defaultRangeDays]="4"
             [maxRangeDays]="80"
+            [showInfoIcon]="true"
+            infoTitle="About Travel Dates"
+            infoMessage="Select your departure and return dates for your trip. The return date must be on or after the departure date, with a maximum trip duration of 80 days. The calendar will highlight your selected date range in red."
             formControlName="dateRange">
           </app-date-range>
         </div>
@@ -47,6 +53,9 @@
             [options]="regions"
             [defaultValue]="'region4'"
             hint="Select your travel region"
+            [showInfoIcon]="true"
+            infoTitle="About Coverage Regions"
+            infoMessage="Choose the geographic region for your travel insurance coverage. Each region covers different countries and territories. Region 4 provides the most comprehensive worldwide coverage (excluding Cuba), while other regions offer more specific coverage areas at different rates."
             formControlName="region">
           </app-multiline-select-dropdown>
         </div>
@@ -58,6 +67,9 @@
             [options]="coverageOptions"
             [defaultValue]="'5000'"
             hint="Select coverage amount"
+            [showInfoIcon]="true"
+            infoTitle="About Coverage Amounts"
+            infoMessage="Select the maximum coverage amount for your trip. Higher coverage amounts provide better protection for medical emergencies, trip cancellations, and lost baggage, but come with additional premium costs. Choose based on your trip value and personal risk tolerance."
             formControlName="coverage">
           </app-split-select-dropdown>
         </div>
@@ -68,6 +80,9 @@
             label="Cover Type"
             [options]="coverTypes"
             [defaultValue]="'individual'"
+            [showInfoIcon]="true"
+            infoTitle="About Cover Types"
+            infoMessage="Choose who will be covered by this insurance policy. Individual covers one person, Couple covers two adults, Family covers 2 adults and up to 4 dependent children, and Group covers 3 or more adults traveling together. Premium rates vary by cover type."
             formControlName="coverType">
           </app-select-dropdown>
         </div>
@@ -78,7 +93,12 @@
             label="Nationality"
             placeholder=""
             [options]="nationalities"
+            [required]="true"
             hint="Start typing or select from dropdown"
+            [errorMessage]="getNationalityError()"
+            [showInfoIcon]="true"
+            infoTitle="About Nationality"
+            infoMessage="Select your nationality as shown on your passport. Your nationality may affect insurance coverage terms, premium rates, and available destinations. If you hold multiple nationalities, select the one on the passport you'll be using for travel."
             formControlName="nationality">
           </app-autocomplete-input>
         </div>
@@ -92,7 +112,11 @@
             [multiple]="true"
             [maxSelection]="3"
             maxSelectionError="You can only select up to 3 activities"
+            [errorAutoHideTime]="2000"
             hint="Choose your planned activities (maximum 3)"
+            [showInfoIcon]="true"
+            infoTitle="About Activities"
+            infoMessage="Select up to 3 planned activities for your trip. Certain activities (like adventure sports, scuba diving, or skiing) may require additional coverage or premium adjustments. Accurately declaring your activities ensures you're properly covered in case of activity-related incidents."
             formControlName="activities">
           </app-multi-select-autocomplete>
         </div>

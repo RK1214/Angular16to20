@@ -3,6 +3,34 @@
   width: 100%;
 }
 
+/* Info icon styling */
+.info-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.info-icon:hover {
+  color: #00bcd4;
+}
+
+/* Align text field wrapper */
+::ng-deep .multi-select-autocomplete .mat-mdc-text-field-wrapper {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Align form field infix */
+::ng-deep .multi-select-autocomplete .mat-mdc-form-field-infix {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
 /* Remove hover and focus backgrounds */
 ::ng-deep .multi-select-autocomplete .mdc-text-field--filled {
   background-color: transparent !important;
@@ -50,6 +78,26 @@
 ::ng-deep .multi-select-autocomplete .mat-mdc-chip-grid {
   margin: 0;
   padding-top: 4px;
+}
+
+/* When empty and not focused, animate label to default position (like nationality field) */
+::ng-deep .multi-select-autocomplete.is-empty:not(.mat-focused) .mat-mdc-floating-label {
+  transform: translateY(-50%) scale(1) !important;
+  font-size: 16px !important;
+  color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* When empty and not focused, reduce chip grid padding to center label properly */
+::ng-deep .multi-select-autocomplete.is-empty:not(.mat-focused) .mat-mdc-chip-grid {
+  padding-top: 0 !important;
+  min-height: 24px;
+}
+
+/* Smooth transitions for label animation */
+::ng-deep .multi-select-autocomplete .mat-mdc-floating-label {
+  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+              font-size 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+              color 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
 }
 
 /* Chip set */
@@ -143,6 +191,97 @@
 
 ::ng-deep .mat-mdc-autocomplete-panel::-webkit-scrollbar-thumb:hover {
   background: #999;
+}
+
+/* Dropdown arrow styling */
+.dropdown-arrow {
+  cursor: pointer;
+  user-select: none;
+  color: rgba(0, 0, 0, 0.54);
+  transition: color 0.2s;
+}
+
+.dropdown-arrow:hover:not(.disabled) {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.dropdown-arrow.disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+/* Keep the bottom border visible */
+::ng-deep .multi-select-autocomplete .mdc-line-ripple {
+  border-bottom-width: 1px !important;
+  border-bottom-style: solid !important;
+  border-bottom-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Red border when there's an error AND not focused */
+::ng-deep .multi-select-autocomplete.has-error:not(.mat-focused) .mdc-line-ripple,
+::ng-deep .multi-select-autocomplete.has-error:not(.mat-focused) .mdc-line-ripple::before,
+::ng-deep .multi-select-autocomplete.has-error:not(.mat-focused) .mdc-line-ripple::after {
+  border-bottom-color: #f44336 !important;
+  border-bottom-width: 2px !important;
+}
+
+::ng-deep .multi-select-autocomplete.has-error:not(.mat-focused) .mat-mdc-floating-label {
+  color: #f44336 !important;
+}
+
+/* Blue border when focused - MUST come after error styles to override */
+::ng-deep .multi-select-autocomplete.mat-focused .mdc-line-ripple,
+::ng-deep .multi-select-autocomplete.mat-focused.has-error .mdc-line-ripple,
+::ng-deep .multi-select-autocomplete.has-error.mat-focused .mdc-line-ripple,
+::ng-deep .multi-select-autocomplete.mat-form-field-should-float.mat-focused .mdc-line-ripple {
+  border-bottom-color: #00bcd4 !important;
+  border-bottom-width: 2px !important;
+}
+
+/* Override any ::before and ::after pseudo elements */
+::ng-deep .multi-select-autocomplete.mat-focused .mdc-line-ripple::before,
+::ng-deep .multi-select-autocomplete.mat-focused .mdc-line-ripple::after,
+::ng-deep .multi-select-autocomplete.mat-focused.has-error .mdc-line-ripple::before,
+::ng-deep .multi-select-autocomplete.mat-focused.has-error .mdc-line-ripple::after,
+::ng-deep .multi-select-autocomplete.has-error.mat-focused .mdc-line-ripple::before,
+::ng-deep .multi-select-autocomplete.has-error.mat-focused .mdc-line-ripple::after {
+  border-bottom-color: #00bcd4 !important;
+  border-bottom-width: 2px !important;
+}
+
+/* Blue label when focused - MUST come after error styles to override */
+::ng-deep .multi-select-autocomplete.mat-focused .mat-mdc-floating-label,
+::ng-deep .multi-select-autocomplete.mat-focused.has-error .mat-mdc-floating-label,
+::ng-deep .multi-select-autocomplete.has-error.mat-focused .mat-mdc-floating-label {
+  color: #00bcd4 !important;
+}
+
+/* Normal cursor color when focused (not red) */
+::ng-deep .multi-select-autocomplete.mat-focused .chip-input,
+::ng-deep .multi-select-autocomplete.has-error.mat-focused .chip-input {
+  caret-color: #00bcd4 !important;
+}
+
+/* External error message styling */
+.external-error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 4px;
+  margin-left: 0;
+  margin-right: 0;
+  line-height: 1.2;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsive adjustments */

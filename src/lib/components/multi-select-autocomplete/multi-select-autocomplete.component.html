@@ -1,5 +1,8 @@
-<mat-form-field [appearance]="appearance" class="multi-select-autocomplete">
-  <mat-label>{{ label }}</mat-label>
+<mat-form-field [appearance]="appearance" class="multi-select-autocomplete" [class.has-error]="shouldShowError()" [class.is-empty]="selectedItems.length === 0">
+  <mat-label>
+    {{ label }}
+    <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+  </mat-label>
 
   <!-- Selected items as chips -->
   <mat-chip-grid #chipGrid>
@@ -23,28 +26,38 @@
       [matChipInputFor]="chipGrid"
       [matAutocomplete]="auto"
       (focus)="onInputFocus()"
+      (blur)="onInputBlur()"
+      (click)="onInputClick()"
+      (keydown)="onInputKeydown($event)"
       [disabled]="disabled"
+      autocomplete="off"
       class="chip-input"
     />
   </mat-chip-grid>
 
+  <!-- Dropdown arrow icon -->
+  <mat-icon
+    matSuffix
+    class="dropdown-arrow"
+    (mousedown)="onArrowMouseDown($event)"
+    (click)="toggleDropdown()"
+    [class.disabled]="disabled"
+    [attr.aria-label]="'Toggle dropdown'">
+    arrow_drop_down
+  </mat-icon>
+
   <!-- Hint text -->
-  <mat-hint *ngIf="hint && !maxSelectionReached">{{ hint }}</mat-hint>
-
-  <!-- Max selection error -->
-  <mat-error *ngIf="maxSelectionReached">
-    {{ maxSelectionError }} ({{ selectedItems.length }}/{{ maxSelection }})
-  </mat-error>
-
-  <!-- Custom error message -->
-  <mat-error *ngIf="errorMessage && !maxSelectionReached">{{ errorMessage }}</mat-error>
+  <mat-hint *ngIf="hint && !showMaxSelectionError && !shouldShowError()">{{ hint }}</mat-hint>
 
   <!-- Autocomplete panel -->
   <mat-autocomplete
     #auto="matAutocomplete"
     (optionSelected)="onOptionSelected($event)"
+    (opened)="onPanelOpened()"
+    (closed)="onPanelClosed()"
     [displayWith]="getDisplayValue.bind(this)"
-    class="multi-select-panel">
+    class="multi-select-panel"
+    [autoActiveFirstOption]="false">
 
     <ng-container *ngIf="filteredOptions$ | async as filtered">
       <!-- Grouped options -->
@@ -78,3 +91,9 @@
     </ng-container>
   </mat-autocomplete>
 </mat-form-field>
+
+<!-- External error message display -->
+<div *ngIf="showMaxSelectionError || shouldShowError()" class="external-error-message">
+  <span *ngIf="showMaxSelectionError">{{ maxSelectionError }} ({{ selectedItems.length }}/{{ maxSelection }})</span>
+  <span *ngIf="shouldShowError() && !showMaxSelectionError">{{ errorMessage }}</span>
+</div>

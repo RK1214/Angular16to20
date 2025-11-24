@@ -14,9 +14,17 @@
 ::ng-deep .date-field .mat-mdc-text-field-wrapper {
   background-color: white !important;
   padding-bottom: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
+}
+
+/* Align form field infix */
+::ng-deep .date-field .mat-mdc-form-field-infix {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* Remove all hover and focus backgrounds */
@@ -101,6 +109,12 @@
   vertical-align: middle;
   margin-left: 4px;
   color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.info-icon:hover {
+  color: #00bcd4;
 }
 
 /* Date range highlighting in calendar */

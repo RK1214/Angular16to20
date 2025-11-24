@@ -5,6 +5,18 @@
   width: 100%;
 }
 
+/* Align form field for consistent underline positioning */
+::ng-deep .select-dropdown .mat-mdc-text-field-wrapper {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+::ng-deep .select-dropdown .mat-mdc-form-field-infix {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Info icon styling */
 .info-icon {
   font-size: 16px;
   width: 16px;
@@ -12,6 +24,12 @@
   vertical-align: middle;
   margin-left: 4px;
   color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.info-icon:hover {
+  color: #00bcd4;
 }
 
 .option-text {

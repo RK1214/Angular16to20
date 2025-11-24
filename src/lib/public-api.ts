@@ -31,6 +31,10 @@ export { AutocompleteInputOption } from './components/autocomplete-input/autocom
 export { MultiSelectAutocompleteComponent } from './components/multi-select-autocomplete/multi-select-autocomplete.component';
 export { AutocompleteOption, AutocompleteGroup } from './components/multi-select-autocomplete/multi-select-autocomplete.component';
 
+// Info Dialog
+export { InfoDialogComponent } from './components/info-dialog/info-dialog.component';
+export { InfoDialogData } from './components/info-dialog/info-dialog.component';
+
 // ============================================================================
 // DIRECTIVES
 // ============================================================================

@@ -1,6 +1,8 @@
 import { Component, Input, OnInit, forwardRef, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
 import { MatDatepicker } from '@angular/material/datepicker';
+import { MatDialog } from '@angular/material/dialog';
+import { InfoDialogComponent } from '../info-dialog/info-dialog.component';
 
 export interface DateRange {
   departureDate: Date | null;
@@ -27,6 +29,9 @@ export class DateRangeComponent implements OnInit, ControlValueAccessor {
   @Input() maxRangeDays: number = 80;
   @Input() minDate: Date = new Date();
   @Input() disabled: boolean = false;
+  @Input() showInfoIcon: boolean = false;
+  @Input() infoTitle: string = 'Information';
+  @Input() infoMessage: string = '';
 
   @ViewChild('departurePicker') departurePicker!: MatDatepicker<Date>;
   @ViewChild('returnPicker') returnPicker!: MatDatepicker<Date>;
@@ -40,10 +45,9 @@ export class DateRangeComponent implements OnInit, ControlValueAccessor {
   private onChange: (value: DateRange | null) => void = () => {};
   private onTouched: () => void = () => {};
 
-  ngOnInit(): void {
-    // Set default dates
-    this.setDefaultDates();
+  constructor(private dialog: MatDialog) {}
 
+  ngOnInit(): void {
     // Subscribe to departure date changes
     this.departureControl.valueChanges.subscribe(date => {
       this.onDepartureDateChange(date);
@@ -54,6 +58,12 @@ export class DateRangeComponent implements OnInit, ControlValueAccessor {
     this.returnControl.valueChanges.subscribe(() => {
       this.emitValue();
     });
+
+    // Set default dates after subscriptions are set up
+    // Use setTimeout to ensure parent form control's onChange is registered
+    setTimeout(() => {
+      this.setDefaultDates();
+    }, 0);
   }
 
   private setDefaultDates(): void {
@@ -220,5 +230,17 @@ export class DateRangeComponent implements OnInit, ControlValueAccessor {
 
   onReturnFocus(): void {
     this.onTouched();
+  }
+
+  openInfoDialog(): void {
+    if (this.showInfoIcon && this.infoMessage) {
+      this.dialog.open(InfoDialogComponent, {
+        width: '500px',
+        data: {
+          title: this.infoTitle,
+          message: this.infoMessage
+        }
+      });
+    }
   }
 }

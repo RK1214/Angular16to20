@@ -10,6 +10,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
 
 // Import from library
 import {
@@ -20,6 +22,7 @@ import {
   AutocompleteInputComponent,
   MultilineSelectDropdownComponent,
   SplitSelectDropdownComponent,
+  InfoDialogComponent,
   // Directives
   FlexDirective,
   GapDirective
@@ -33,6 +36,7 @@ import {
     AutocompleteInputComponent,
     MultilineSelectDropdownComponent,
     SplitSelectDropdownComponent,
+    InfoDialogComponent,
     FlexDirective,
     GapDirective
   ],
@@ -45,7 +49,9 @@ import {
     MatChipsModule,
     MatIconModule,
     MatDatepickerModule,
-    MatSelectModule
+    MatSelectModule,
+    MatDialogModule,
+    MatButtonModule
   ],
   exports: [
     MultiSelectAutocompleteComponent,

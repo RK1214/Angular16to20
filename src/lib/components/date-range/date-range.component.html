@@ -1,7 +1,10 @@
 <div class="date-range-container">
   <!-- Departure Date Field -->
   <mat-form-field class="date-field" floatLabel="always">
-    <mat-label>{{ departureLabel }} <mat-icon class="info-icon">info</mat-icon></mat-label>
+    <mat-label>
+      {{ departureLabel }}
+      <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+    </mat-label>
     <input
       matInput
       [matDatepicker]="departurePicker"
@@ -21,7 +24,10 @@
 
   <!-- Return Date Field -->
   <mat-form-field class="date-field" floatLabel="always">
-    <mat-label>{{ returnLabel }} <mat-icon class="info-icon">info</mat-icon></mat-label>
+    <mat-label>
+      {{ returnLabel }}
+      <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+    </mat-label>
     <input
       matInput
       [matDatepicker]="returnPicker"

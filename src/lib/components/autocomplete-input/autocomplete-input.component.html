@@ -1,5 +1,8 @@
-<mat-form-field class="autocomplete-input">
-  <mat-label>{{ label }}</mat-label>
+<mat-form-field class="autocomplete-input" [class.has-error]="shouldShowError()">
+  <mat-label>
+    {{ label }}
+    <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+  </mat-label>
 
   <input
     matInput
@@ -7,18 +10,35 @@
     [matAutocomplete]="auto"
     [placeholder]="placeholder"
     (focus)="onFocus()"
+    (blur)="onBlur()"
+    (click)="onInputClick()"
+    (keydown)="onInputKeydown($event)"
     [disabled]="disabled"
     [required]="required">
+
+  <!-- Dropdown arrow icon -->
+  <mat-icon
+    matSuffix
+    class="dropdown-arrow"
+    (mousedown)="onArrowMouseDown($event)"
+    (click)="toggleDropdown()"
+    [class.disabled]="disabled"
+    [attr.aria-label]="'Toggle dropdown'">
+    arrow_drop_down
+  </mat-icon>
 
   <mat-autocomplete
     #auto="matAutocomplete"
     [displayWith]="displayFn"
+    (opened)="onPanelOpened()"
+    (closed)="onPanelClosed()"
     class="autocomplete-panel">
 
     <mat-option
       *ngFor="let option of filteredOptions$ | async"
       [value]="option.label"
       [class.selected-option]="isSelected(option)"
+      (mousedown)="onOptionMouseDown($event)"
       (click)="onOptionSelected(option)">
       <span class="option-text" [class.bold-selected]="isSelected(option)">
         {{ option.label }}
@@ -31,6 +51,10 @@
     </mat-option>
   </mat-autocomplete>
 
-  <mat-hint *ngIf="hint">{{ hint }}</mat-hint>
-  <mat-error *ngIf="errorMessage">{{ errorMessage }}</mat-error>
+  <mat-hint *ngIf="hint && !shouldShowError()">{{ hint }}</mat-hint>
 </mat-form-field>
+
+<!-- External error message display -->
+<div *ngIf="shouldShowError()" class="external-error-message">
+  {{ errorMessage }}
+</div>

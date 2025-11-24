@@ -1,8 +1,10 @@
-import { Component, Input, OnInit, forwardRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, forwardRef, ViewChild, ElementRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
+import { InfoDialogComponent } from '../info-dialog/info-dialog.component';
 
 export interface AutocompleteOption {
   value: any;
@@ -28,9 +30,9 @@ export interface AutocompleteGroup {
     }
   ]
 })
-export class MultiSelectAutocompleteComponent implements OnInit, ControlValueAccessor {
+export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, ControlValueAccessor {
   @Input() label: string = 'Select options';
-  @Input() placeholder: string = 'Type to search...';
+  @Input() placeholder: string = '';
   @Input() options: AutocompleteOption[] = [];
   @Input() groupedOptions: AutocompleteGroup[] = [];
   @Input() multiple: boolean = true;
@@ -41,19 +43,44 @@ export class MultiSelectAutocompleteComponent implements OnInit, ControlValueAcc
   @Input() errorMessage: string = '';
   @Input() maxSelection?: number;
   @Input() maxSelectionError: string = 'Maximum selection limit reached';
+  @Input() errorAutoHideTime: number = 3000; // Default 3 seconds
+  @Input() openOnFocus: boolean = false; // Default: don't open dropdown on focus
+  @Input() showInfoIcon: boolean = false;
+  @Input() infoTitle: string = 'Information';
+  @Input() infoMessage: string = '';
 
   @ViewChild('input') input!: ElementRef<HTMLInputElement>;
+  @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
 
   searchControl = new FormControl('');
   selectedItems: AutocompleteOption[] = [];
   filteredOptions$!: Observable<AutocompleteOption[] | AutocompleteGroup[]>;
   maxSelectionReached: boolean = false;
+  showMaxSelectionError: boolean = false; // For displaying error without affecting form validity
+  isFocused: boolean = false;
+  private shouldOpenPanel: boolean = false;
+  private justFocused: boolean = false;
+  private errorTimeout: any = null;
+  private blurTimeout: any = null;
+  private isInteractingWithPanel: boolean = false;
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
+  constructor(private dialog: MatDialog) {}
+
   ngOnInit(): void {
     this.setupFilteredOptions();
+  }
+
+  ngOnDestroy(): void {
+    // Clear any pending timeouts
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+    }
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+    }
   }
 
   private setupFilteredOptions(): void {
@@ -95,10 +122,8 @@ export class MultiSelectAutocompleteComponent implements OnInit, ControlValueAcc
       return false;
     }
 
-    // Don't show any options if max selection is reached
-    if (this.maxSelection && this.selectedItems.length >= this.maxSelection) {
-      return false;
-    }
+    // Show all options even if max selection is reached
+    // The selection will be prevented in onOptionSelected()
 
     // Filter by search term
     if (!searchTerm) {
@@ -111,15 +136,25 @@ export class MultiSelectAutocompleteComponent implements OnInit, ControlValueAcc
   private checkMaxSelection(): void {
     if (this.maxSelection) {
       this.maxSelectionReached = this.selectedItems.length >= this.maxSelection;
+      // Note: We don't set form control errors here to keep the form valid
+      // The maxSelectionReached flag is used for informative display only
+    }
+  }
 
-      // Disable or enable input based on max selection
-      if (this.maxSelectionReached) {
-        this.searchControl.disable({ emitEvent: false });
-      } else {
-        if (!this.disabled) {
-          this.searchControl.enable({ emitEvent: false });
-        }
-      }
+  private startErrorAutoHide(): void {
+    // Clear any existing timeout
+    this.clearErrorAutoHide();
+
+    // Set new timeout to auto-hide the max selection error
+    this.errorTimeout = setTimeout(() => {
+      this.showMaxSelectionError = false;
+    }, this.errorAutoHideTime);
+  }
+
+  private clearErrorAutoHide(): void {
+    if (this.errorTimeout) {
+      clearTimeout(this.errorTimeout);
+      this.errorTimeout = null;
     }
   }
 
@@ -128,15 +163,32 @@ export class MultiSelectAutocompleteComponent implements OnInit, ControlValueAcc
   }
 
   onOptionSelected(event: MatAutocompleteSelectedEvent): void {
+    // Clear any pending blur timeout when option is selected
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
+    // Keep focused state to prevent error from showing immediately
+    this.isFocused = true;
+
     const selectedOption = event.option.value as AutocompleteOption;
 
     if (this.multiple) {
-      // Check max selection limit
+      // Check max selection limit - don't add item, close dropdown, show error
       if (this.maxSelection && this.selectedItems.length >= this.maxSelection) {
         this.maxSelectionReached = true;
-        this.searchControl.setValue('');
+        // Clear input value first
+        this.searchControl.setValue('', { emitEvent: false });
         if (this.input) {
           this.input.nativeElement.value = '';
+        }
+        // Show informative error (doesn't affect form validity)
+        this.showMaxSelectionError = true;
+        // Start auto-hide timer for the error
+        this.startErrorAutoHide();
+        // Close the dropdown
+        if (this.autocompleteTrigger) {
+          this.autocompleteTrigger.closePanel();
         }
         return;
       }
@@ -167,6 +219,16 @@ export class MultiSelectAutocompleteComponent implements OnInit, ControlValueAcc
 
     if (index >= 0) {
       this.selectedItems.splice(index, 1);
+
+      // Clear max selection error when item is removed
+      if (this.maxSelection && this.selectedItems.length < this.maxSelection) {
+        this.maxSelectionReached = false;
+        // Clear the informative error display
+        this.showMaxSelectionError = false;
+        // Clear the auto-hide timeout since error is manually cleared
+        this.clearErrorAutoHide();
+      }
+
       this.checkMaxSelection();
       this.emitValue();
     }
@@ -259,6 +321,142 @@ export class MultiSelectAutocompleteComponent implements OnInit, ControlValueAcc
   }
 
   onInputFocus(): void {
-    this.onTouched();
+    // Clear any pending blur timeout
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
+    // Set focused state to hide error message
+    this.isFocused = true;
+
+    if (this.openOnFocus) {
+      // If openOnFocus is enabled, open the dropdown
+      this.shouldOpenPanel = true;
+      if (this.autocompleteTrigger) {
+        this.autocompleteTrigger.openPanel();
+      }
+    } else {
+      // Track that focus just happened (used to prevent auto-opening)
+      this.justFocused = true;
+      // Reset the justFocused flag after a short delay
+      setTimeout(() => {
+        this.justFocused = false;
+      }, 100);
+    }
+  }
+
+  onInputBlur(): void {
+    // Delay blur handling to prevent flickering when clicking dropdown options or arrow icon
+    this.blurTimeout = setTimeout(() => {
+      // Don't process blur if autocomplete panel is open
+      if (this.autocompleteTrigger?.panelOpen) {
+        return;
+      }
+      this.isFocused = false;
+      this.onTouched();
+    }, 150);
+  }
+
+  shouldShowError(): boolean {
+    // Only show validation error when not focused and not interacting with panel
+    return !this.isFocused && !this.isInteractingWithPanel && !!this.errorMessage;
+  }
+
+  openInfoDialog(): void {
+    if (this.showInfoIcon && this.infoMessage) {
+      this.dialog.open(InfoDialogComponent, {
+        width: '500px',
+        data: {
+          title: this.infoTitle,
+          message: this.infoMessage
+        }
+      });
+    }
+  }
+
+  onInputClick(): void {
+    // Prevent panel from opening on click if openOnFocus is disabled
+    if (!this.openOnFocus && this.autocompleteTrigger?.panelOpen && !this.shouldOpenPanel) {
+      this.autocompleteTrigger.closePanel();
+    }
+  }
+
+  onInputKeydown(event: KeyboardEvent): void {
+    // Open panel on ArrowDown key press
+    if (event.key === 'ArrowDown' && this.autocompleteTrigger) {
+      event.preventDefault();
+      this.shouldOpenPanel = true;
+      this.autocompleteTrigger.openPanel();
+    } else if (event.key !== 'Escape' && event.key !== 'Enter' && event.key !== 'Tab' &&
+               event.key !== 'ArrowUp' && event.key !== 'ArrowDown' &&
+               event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      // Allow panel to open when user types
+      this.shouldOpenPanel = true;
+    }
+  }
+
+  onPanelOpened(): void {
+    // Clear any pending blur timeout immediately when panel opens
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
+
+    // Mark that we're interacting with the panel
+    this.isInteractingWithPanel = true;
+    // Ensure focused state is maintained
+    this.isFocused = true;
+
+    // Close panel if it opened without explicit user action (only when openOnFocus is disabled)
+    if (!this.openOnFocus && this.justFocused && !this.shouldOpenPanel) {
+      this.autocompleteTrigger?.closePanel();
+    }
+  }
+
+  onArrowMouseDown(event: MouseEvent): void {
+    // Prevent input blur when clicking arrow
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Clear any pending blur timeout
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
+    // Maintain focused state
+    this.isFocused = true;
+  }
+
+  toggleDropdown(): void {
+    // Clear any pending blur timeout
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
+    // Maintain focused state
+    this.isFocused = true;
+
+    // Toggle autocomplete panel when arrow icon is clicked
+    if (this.autocompleteTrigger && !this.disabled) {
+      if (this.autocompleteTrigger.panelOpen) {
+        this.autocompleteTrigger.closePanel();
+      } else {
+        this.shouldOpenPanel = true;
+        this.autocompleteTrigger.openPanel();
+      }
+    }
+  }
+
+  onPanelClosed(): void {
+    // Reset the flag when panel closes
+    this.shouldOpenPanel = false;
+    // Panel closed, allow blur to process
+    this.isInteractingWithPanel = false;
+    // Ensure blur is processed after panel closes
+    setTimeout(() => {
+      if (!this.isFocused && !this.autocompleteTrigger?.panelOpen) {
+        this.onTouched();
+      }
+    }, 100);
   }
 }

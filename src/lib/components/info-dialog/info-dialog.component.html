@@ -1,0 +1,19 @@
+<div class="info-dialog">
+  <!-- Header with title and close icon -->
+  <div class="dialog-header">
+    <h2 mat-dialog-title class="dialog-title">{{ data.title }}</h2>
+    <button mat-icon-button class="close-icon-button" (click)="onClose()" aria-label="Close dialog">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Message content -->
+  <mat-dialog-content class="dialog-content">
+    <p class="dialog-message">{{ data.message }}</p>
+  </mat-dialog-content>
+
+  <!-- Close button at bottom -->
+  <mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-raised-button color="primary" (click)="onClose()">Close</button>
+  </mat-dialog-actions>
+</div>

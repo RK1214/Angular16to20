@@ -2,13 +2,37 @@
   width: 100%;
 }
 
+/* Info icon styling */
+.info-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.info-icon:hover {
+  color: #00bcd4;
+}
+
 /* White background, no borders */
 ::ng-deep .autocomplete-input .mat-mdc-text-field-wrapper {
   background-color: white !important;
   padding-bottom: 0;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
   border: none !important;
   box-shadow: none !important;
   outline: none !important;
+}
+
+/* Align form field infix */
+::ng-deep .autocomplete-input .mat-mdc-form-field-infix {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* Remove all hover and focus backgrounds */
@@ -51,9 +75,46 @@
   border-bottom-color: rgba(0, 0, 0, 0.12) !important;
 }
 
-::ng-deep .autocomplete-input.mat-focused .mdc-line-ripple {
+/* Red border when there's an error AND not focused */
+::ng-deep .autocomplete-input.has-error:not(.mat-focused) .mdc-line-ripple {
+  border-bottom-color: #f44336 !important;
+  border-bottom-width: 2px !important;
+}
+
+/* Red label when there's an error AND not focused */
+::ng-deep .autocomplete-input.has-error:not(.mat-focused) .mat-mdc-floating-label {
+  color: #f44336 !important;
+}
+
+/* Blue border when focused - MUST come after error styles to override */
+::ng-deep .autocomplete-input.mat-focused .mdc-line-ripple,
+::ng-deep .autocomplete-input.mat-focused.has-error .mdc-line-ripple,
+::ng-deep .autocomplete-input.has-error.mat-focused .mdc-line-ripple,
+::ng-deep .autocomplete-input.mat-form-field-should-float.mat-focused .mdc-line-ripple {
   border-bottom-color: #00bcd4 !important;
   border-bottom-width: 2px !important;
+}
+
+/* Override any ::before and ::after pseudo elements */
+::ng-deep .autocomplete-input.mat-focused .mdc-line-ripple::before,
+::ng-deep .autocomplete-input.mat-focused .mdc-line-ripple::after,
+::ng-deep .autocomplete-input.has-error.mat-focused .mdc-line-ripple::before,
+::ng-deep .autocomplete-input.has-error.mat-focused .mdc-line-ripple::after {
+  border-bottom-color: #00bcd4 !important;
+}
+
+/* Blue label when focused - MUST come after error styles to override */
+::ng-deep .autocomplete-input.mat-focused .mat-mdc-floating-label,
+::ng-deep .autocomplete-input.mat-focused.has-error .mat-mdc-floating-label,
+::ng-deep .autocomplete-input.has-error.mat-focused .mat-mdc-floating-label {
+  color: #00bcd4 !important;
+}
+
+/* Normal cursor color when focused (not red) */
+::ng-deep .autocomplete-input.mat-focused .mat-mdc-input-element,
+::ng-deep .autocomplete-input.has-error.mat-focused .mat-mdc-input-element {
+  caret-color: #00bcd4 !important;
+  color: #333 !important;
 }
 
 /* Make input value larger and bold */
@@ -130,4 +191,43 @@
 /* Input styling */
 ::ng-deep .autocomplete-input input {
   font-size: 16px;
+}
+
+/* Dropdown arrow styling */
+.dropdown-arrow {
+  cursor: pointer;
+  user-select: none;
+  color: rgba(0, 0, 0, 0.54);
+  transition: color 0.2s;
+}
+
+.dropdown-arrow:hover:not(.disabled) {
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.dropdown-arrow.disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+/* External error message styling */
+.external-error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 4px;
+  margin-left: 0;
+  margin-right: 0;
+  line-height: 1.2;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

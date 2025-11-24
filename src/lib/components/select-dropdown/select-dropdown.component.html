@@ -1,5 +1,8 @@
 <mat-form-field class="select-dropdown" floatLabel="always">
-  <mat-label>{{ label }} <mat-icon class="info-icon">info</mat-icon></mat-label>
+  <mat-label>
+    {{ label }}
+    <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+  </mat-label>
 
   <mat-select
     [(value)]="selectedValue"

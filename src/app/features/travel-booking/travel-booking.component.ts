@@ -287,7 +287,7 @@ export class TravelBookingComponent implements OnInit {
       region: ['region4'],
       coverage: ['5000'],
       coverType: ['individual'],
-      nationality: [''],
+      nationality: ['', Validators.required],
       activities: [[]]
     });
 
@@ -369,6 +369,14 @@ export class TravelBookingComponent implements OnInit {
     const control = this.travelForm.get('dateRange');
     if (control?.hasError('required') && control.touched) {
       return 'Please select travel dates';
+    }
+    return '';
+  }
+
+  getNationalityError(): string {
+    const control = this.travelForm.get('nationality');
+    if (control?.hasError('required') && control.touched) {
+      return 'Please select your nationality';
     }
     return '';
   }
