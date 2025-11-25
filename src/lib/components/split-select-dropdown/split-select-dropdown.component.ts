@@ -5,9 +5,9 @@ import { InfoDialogComponent } from '../info-dialog/info-dialog.component';
 
 export interface SplitSelectOption {
   value: any;
-  leftLabel: string;
-  rightLabel: string;
-  isDefault?: boolean;
+  leftText: string;
+  rightText: string;
+  default?: boolean;
 }
 
 @Component({
@@ -84,7 +84,7 @@ export class SplitSelectDropdownComponent implements ControlValueAccessor {
       }
     } else {
       // Look for a default option in the options array
-      const defaultOption = this.options.find(opt => opt.isDefault === true);
+      const defaultOption = this.options.find(opt => opt.default === true);
       this.selectedValue = defaultOption || null;
     }
   }

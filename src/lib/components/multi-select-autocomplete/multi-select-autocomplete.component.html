@@ -11,8 +11,8 @@
       [removable]="!disabled"
       (removed)="removeItem(item)"
       class="selected-chip">
-      {{ item.label }}
-      <button matChipRemove *ngIf="!disabled" [attr.aria-label]="'Remove ' + item.label">
+      {{ item.text }}
+      <button matChipRemove *ngIf="!disabled" [attr.aria-label]="'Remove ' + item.text">
         <mat-icon>cancel</mat-icon>
       </button>
     </mat-chip-row>
@@ -68,7 +68,7 @@
               *ngFor="let option of group.options"
               [value]="option"
               class="autocomplete-option">
-              {{ option.label }}
+              {{ option.text }}
             </mat-option>
           </mat-optgroup>
         </ng-container>
@@ -80,7 +80,7 @@
           *ngFor="let option of filtered"
           [value]="option"
           class="autocomplete-option">
-          {{ option.label }}
+          {{ option.text }}
         </mat-option>
       </ng-container>
 

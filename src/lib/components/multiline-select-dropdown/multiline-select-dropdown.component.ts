@@ -5,9 +5,9 @@ import { InfoDialogComponent } from '../info-dialog/info-dialog.component';
 
 export interface MultilineSelectOption {
   value: any;
-  label: string;
+  text: string;
   description: string;
-  isDefault?: boolean;
+  default?: boolean;
 }
 
 @Component({
@@ -57,7 +57,7 @@ export class MultilineSelectDropdownComponent implements ControlValueAccessor {
   }
 
   getSelectedLabel(): string {
-    return this.selectedValue ? this.selectedValue.label : '';
+    return this.selectedValue ? this.selectedValue.text : '';
   }
 
   openInfoDialog(): void {
@@ -84,7 +84,7 @@ export class MultilineSelectDropdownComponent implements ControlValueAccessor {
       }
     } else {
       // Look for a default option in the options array
-      const defaultOption = this.options.find(opt => opt.isDefault === true);
+      const defaultOption = this.options.find(opt => opt.default === true);
       this.selectedValue = defaultOption || null;
     }
   }

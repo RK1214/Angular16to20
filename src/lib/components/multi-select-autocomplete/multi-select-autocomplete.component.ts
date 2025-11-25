@@ -8,7 +8,7 @@ import { InfoDialogComponent } from '../info-dialog/info-dialog.component';
 
 export interface AutocompleteOption {
   value: any;
-  label: string;
+  text: string;
   group?: string;
 }
 
@@ -133,7 +133,7 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
       return true;
     }
 
-    return option.label.toLowerCase().includes(searchTerm);
+    return option.text.toLowerCase().includes(searchTerm);
   }
 
   private checkMaxSelection(): void {

@@ -14,8 +14,8 @@
 
     <mat-select-trigger>
       <div class="trigger-content" *ngIf="getSelectedOption()">
-        <span class="trigger-left">{{ getSelectedOption()?.leftLabel }}</span>
-        <span class="trigger-right">{{ getSelectedOption()?.rightLabel }}</span>
+        <span class="trigger-left">{{ getSelectedOption()?.leftText }}</span>
+        <span class="trigger-right">{{ getSelectedOption()?.rightText }}</span>
       </div>
     </mat-select-trigger>
 
@@ -25,10 +25,10 @@
       [class.selected-option]="isSelected(option)">
       <div class="option-split-content">
         <span class="option-left" [class.bold-selected]="isSelected(option)">
-          {{ option.leftLabel }}
+          {{ option.leftText }}
         </span>
         <span class="option-right" [class.bold-selected]="isSelected(option)">
-          {{ option.rightLabel }}
+          {{ option.rightText }}
         </span>
       </div>
       <mat-icon *ngIf="isSelected(option)" class="check-icon">check</mat-icon>

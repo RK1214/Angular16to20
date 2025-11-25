@@ -5,8 +5,8 @@ import { InfoDialogComponent } from '../info-dialog/info-dialog.component';
 
 export interface SelectOption {
   value: any;
-  label: string;
-  isDefault?: boolean;
+  text: string;
+  default?: boolean;
 }
 
 @Component({
@@ -79,7 +79,7 @@ export class SelectDropdownComponent implements ControlValueAccessor {
       }
     } else {
       // Look for a default option in the options array
-      const defaultOption = this.options.find(opt => opt.isDefault === true);
+      const defaultOption = this.options.find(opt => opt.default === true);
       this.selectedValue = defaultOption || null;
     }
   }

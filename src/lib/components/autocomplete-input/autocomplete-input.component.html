@@ -36,12 +36,12 @@
 
     <mat-option
       *ngFor="let option of filteredOptions$ | async"
-      [value]="option.label"
+      [value]="option.text"
       [class.selected-option]="isSelected(option)"
       (mousedown)="onOptionMouseDown($event)"
       (click)="onOptionSelected(option)">
       <span class="option-text" [class.bold-selected]="isSelected(option)">
-        {{ option.label }}
+        {{ option.text }}
       </span>
       <mat-icon *ngIf="isSelected(option)" class="check-icon">check</mat-icon>
     </mat-option>

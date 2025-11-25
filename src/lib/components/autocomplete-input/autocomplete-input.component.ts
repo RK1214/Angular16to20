@@ -8,7 +8,7 @@ import { InfoDialogComponent } from '../info-dialog/info-dialog.component';
 
 export interface AutocompleteInputOption {
   value: string;
-  label: string;
+  text: string;
 }
 
 @Component({
@@ -63,16 +63,16 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
 
     // Subscribe to value changes
     this.inputControl.valueChanges.subscribe(value => {
-      const stringValue = typeof value === 'string' ? value : (value as AutocompleteInputOption)?.label || '';
+      const stringValue = typeof value === 'string' ? value : (value as AutocompleteInputOption)?.text || '';
 
       // Auto-select if enabled and there's an exact case-insensitive match
       if (this.autoSelectExactMatch && typeof value === 'string' && value.trim()) {
         const exactMatch = this.findExactMatch(value);
-        if (exactMatch && this.selectedValue !== exactMatch.label) {
+        if (exactMatch && this.selectedValue !== exactMatch.text) {
           // Found exact match, auto-select it
-          this.selectedValue = exactMatch.label;
-          this.inputControl.setValue(exactMatch.label, { emitEvent: false });
-          this.onChange(exactMatch.label);
+          this.selectedValue = exactMatch.text;
+          this.inputControl.setValue(exactMatch.text, { emitEvent: false });
+          this.onChange(exactMatch.text);
           this.onTouched();
           return;
         }
@@ -87,7 +87,7 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
   private findExactMatch(searchValue: string): AutocompleteInputOption | null {
     const searchLower = searchValue.trim().toLowerCase();
     return this.options.find(option =>
-      option.label.toLowerCase() === searchLower
+      option.text.toLowerCase() === searchLower
     ) || null;
   }
 
@@ -102,7 +102,7 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
     this.filteredOptions$ = this.inputControl.valueChanges.pipe(
       startWith(''),
       map(value => {
-        const filterValue = typeof value === 'string' ? value : (value as AutocompleteInputOption)?.label || '';
+        const filterValue = typeof value === 'string' ? value : (value as AutocompleteInputOption)?.text || '';
         return this.filterOptions(filterValue);
       })
     );
@@ -115,7 +115,7 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
 
     const filterValue = value.toLowerCase().trim();
     return this.options.filter(option =>
-      option.label.toLowerCase().includes(filterValue)
+      option.text.toLowerCase().includes(filterValue)
     );
   }
 
@@ -139,21 +139,21 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
       clearTimeout(this.blurTimeout);
       this.blurTimeout = null;
     }
-    this.selectedValue = option.label;
-    this.inputControl.setValue(option.label);
+    this.selectedValue = option.text;
+    this.inputControl.setValue(option.text);
     // Keep focused state to prevent error from showing immediately
     this.isFocused = true;
   }
 
   isSelected(option: AutocompleteInputOption): boolean {
-    return this.selectedValue === option.label;
+    return this.selectedValue === option.text;
   }
 
   displayFn(value: string | AutocompleteInputOption): string {
     if (typeof value === 'string') {
       return value;
     }
-    return value?.label || '';
+    return value?.text || '';
   }
 
   onFocus(): void {
