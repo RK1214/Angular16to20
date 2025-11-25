@@ -16,14 +16,14 @@
           </mat-radio-group>
         </div>
 
-        <!-- Destination Multi-Select Autocomplete -->
-        <div class="form-section">
+        <!-- Destination Multi-Select Autocomplete (Only for Single Trip) -->
+        <div class="form-section" *ngIf="isSingleTrip()">
           <app-multi-select-autocomplete
             label="Destination(s)"
             [groupedOptions]="destinations"
             [required]="true"
             [maxSelection]="5"
-            hint="You can select multiple destinations"
+            hint="You can select multiple destinations (Required for Single Trip)"
             [errorMessage]="getDestinationError()"
             [showInfoIcon]="true"
             infoTitle="About Destinations"
@@ -47,13 +47,14 @@
           </app-date-range>
         </div>
 
-        <!-- NEW: Multiline Select Dropdown for Regions -->
-        <div class="form-section">
+        <!-- NEW: Multiline Select Dropdown for Regions (Only for Annual Multi-Trip) -->
+        <div class="form-section" *ngIf="isAnnualMultiTrip()">
           <app-multiline-select-dropdown
             label="Regions"
             [options]="regions"
-            [defaultValue]="'region4'"
-            hint="Select your travel region"
+            [required]="true"
+            hint="Select your travel region (Required for Annual Multi-Trip)"
+            [errorMessage]="getRegionError()"
             [showInfoIcon]="true"
             infoTitle="About Coverage Regions"
             infoMessage="Choose the geographic region for your travel insurance coverage. Each region covers different countries and territories. Region 4 provides the most comprehensive worldwide coverage (excluding Cuba), while other regions offer more specific coverage areas at different rates."
@@ -66,7 +67,6 @@
           <app-split-select-dropdown
             label="Coverage"
             [options]="coverageOptions"
-            [defaultValue]="'5000'"
             hint="Select coverage amount"
             [showInfoIcon]="true"
             infoTitle="About Coverage Amounts"
@@ -80,7 +80,6 @@
           <app-select-dropdown
             label="Cover Type"
             [options]="coverTypes"
-            [defaultValue]="'individual'"
             [showInfoIcon]="true"
             infoTitle="About Cover Types"
             infoMessage="Choose who will be covered by this insurance policy. Individual covers one person, Couple covers two adults, Family covers 2 adults and up to 4 dependent children, and Group covers 3 or more adults traveling together. Premium rates vary by cover type."
@@ -121,6 +120,50 @@
             formControlName="activities">
           </app-multi-select-autocomplete>
         </div>
+
+        <!-- DEMO: Inter-Component Communication Display -->
+        <mat-card class="summary-card">
+          <mat-card-header>
+            <mat-card-title>📊 Live Summary (Updates via onChange Events)</mat-card-title>
+            <mat-card-subtitle>This section demonstrates real-time inter-component communication</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="summary-label">Destinations Selected:</span>
+                <span class="summary-value">{{ selectedDestinationCount }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Trip Duration:</span>
+                <span class="summary-value">{{ tripDurationDays }} days</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Cover Type:</span>
+                <span class="summary-value">{{ selectedCoverTypeName || 'Not selected' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Region:</span>
+                <span class="summary-value">{{ selectedRegionName || 'Not selected' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Coverage:</span>
+                <span class="summary-value">{{ selectedCoverageName || 'Not selected' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="summary-label">Activities Selected:</span>
+                <span class="summary-value">{{ selectedActivitiesCount }}</span>
+              </div>
+              <div class="summary-item total-premium">
+                <span class="summary-label">Estimated Premium:</span>
+                <span class="summary-value premium-value">SGD ${{ totalPremium.toFixed(2) }}</span>
+              </div>
+            </div>
+            <div class="demo-note">
+              <mat-icon>info</mat-icon>
+              <span>Change any form value above and watch this section update automatically! This demonstrates how parent components can react to child component changes using valueChanges observable.</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
 
         <!-- Form Actions -->
         <div class="form-actions">

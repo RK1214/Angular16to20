@@ -242,11 +242,12 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
 
   private emitValue(): void {
     if (this.multiple) {
-      const values = this.selectedItems.map(item => item.value);
-      this.onChange(values);
+      // Emit full objects (with value and label) instead of just values
+      this.onChange(this.selectedItems);
     } else {
-      const value = this.selectedItems.length > 0 ? this.selectedItems[0].value : null;
-      this.onChange(value);
+      // Single select - emit full object or null
+      const selectedObject = this.selectedItems.length > 0 ? this.selectedItems[0] : null;
+      this.onChange(selectedObject);
     }
     this.onTouched();
   }
@@ -255,11 +256,24 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
   writeValue(value: any): void {
     if (value) {
       if (this.multiple && Array.isArray(value)) {
-        // Map values to options
-        this.selectedItems = this.findOptionsByValues(value);
+        // Handle both array of objects and array of values
+        if (value.length > 0 && typeof value[0] === 'object' && value[0].hasOwnProperty('value')) {
+          // Already an array of objects
+          this.selectedItems = value;
+        } else {
+          // Array of primitive values - map to options
+          this.selectedItems = this.findOptionsByValues(value);
+        }
       } else if (!this.multiple) {
-        const option = this.findOptionByValue(value);
-        this.selectedItems = option ? [option] : [];
+        // Single select - handle both object and primitive value
+        if (typeof value === 'object' && value.hasOwnProperty('value')) {
+          // Already an object
+          this.selectedItems = [value];
+        } else {
+          // Primitive value - find the option
+          const option = this.findOptionByValue(value);
+          this.selectedItems = option ? [option] : [];
+        }
       }
     } else {
       this.selectedItems = [];

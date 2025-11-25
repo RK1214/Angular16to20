@@ -19,6 +19,15 @@ import {
 export class TravelBookingComponent implements OnInit {
   travelForm!: FormGroup;
 
+  // Dynamic state variables updated by onChange events
+  selectedDestinationCount: number = 0;
+  selectedCoverTypeName: string = '';
+  selectedRegionName: string = '';
+  selectedCoverageName: string = '';
+  totalPremium: number = 0;
+  tripDurationDays: number = 0;
+  selectedActivitiesCount: number = 0;
+
   // Destination options with grouped data
   destinations: AutocompleteGroup[] = [
     {
@@ -59,7 +68,7 @@ export class TravelBookingComponent implements OnInit {
 
   // Cover type options (using new select dropdown component)
   coverTypes: SelectOption[] = [
-    { value: 'individual', label: 'Individual' },
+    { value: 'individual', label: 'Individual', isDefault: true },
     { value: 'couple', label: 'Couple' },
     { value: 'family', label: 'Family' },
     { value: 'group', label: 'Group' }
@@ -82,14 +91,14 @@ export class TravelBookingComponent implements OnInit {
     { value: 'region1', label: 'Region 1', description: 'Asia excluding Nepal, North Korea, Tibet, Region 3 and 4.' },
     { value: 'region2', label: 'Region 2', description: 'Australia, New Zealand, Maldives, Sri Lanka and Seychelles.' },
     { value: 'region3', label: 'Region 3', description: 'Worldwide including Nepal, North Korea, Tibet, Region 1 and 2 but excluding Cuba, USA and Canada.' },
-    { value: 'region4', label: 'Region 4', description: 'Worldwide excluding Cuba.' }
+    { value: 'region4', label: 'Region 4', description: 'Worldwide excluding Cuba.', isDefault: true }
   ];
 
   // Coverage options (using new split-select-dropdown component)
   coverageOptions: SplitSelectOption[] = [
     { value: 'none', leftLabel: 'None', rightLabel: '' },
     { value: '2500', leftLabel: 'SGD 2,500 coverage', rightLabel: '+ SGD 3.92' },
-    { value: '5000', leftLabel: 'SGD 5,000 coverage', rightLabel: '+ SGD 4.69' },
+    { value: '5000', leftLabel: 'SGD 5,000 coverage', rightLabel: '+ SGD 4.69', isDefault: true },
     { value: '10000', leftLabel: 'SGD 10,000 coverage', rightLabel: '+ SGD 6.54' }
   ];
 
@@ -282,47 +291,88 @@ export class TravelBookingComponent implements OnInit {
   ngOnInit() {
     this.travelForm = this.fb.group({
       tripType: ['single'],
-      destinations: [[], Validators.required],
+      destinations: [[], Validators.required],  // Always has required validator
       dateRange: [null, Validators.required],
-      region: ['region4'],
-      coverage: ['5000'],
-      coverType: ['individual'],
+      region: [null, Validators.required],  // Always has required validator
+      coverage: [null],  // Will be set by isDefault
+      coverType: [null],  // Will be set by isDefault
       nationality: ['', Validators.required],
       activities: [[]]
     });
 
+    // DEMO: Conditional validation using enable/disable
+    // Listen to trip type changes and enable/disable controls accordingly
+    this.travelForm.get('tripType')?.valueChanges.subscribe(tripType => {
+      console.log('Trip type changed:', tripType);
+      this.updateFieldsBasedOnTripType(tripType);
+    });
+
+    // Initialize field states based on initial trip type
+    this.updateFieldsBasedOnTripType(this.travelForm.get('tripType')?.value);
+
     // Subscribe to form changes to log values
     this.travelForm.valueChanges.subscribe(values => {
       console.log('Form values:', values);
+      this.calculateTotalPremium();
     });
 
-    // Subscribe to specific field changes
+    // DEMO: Inter-component communication via onChange events
+    // When destinations change, update destination count
+    // Note: destinations is now an array of objects [{ value: 'CHN', label: 'China' }, ...]
     this.travelForm.get('destinations')?.valueChanges.subscribe(destinations => {
-      console.log('Selected destinations:', destinations);
+      console.log('Selected destinations (full objects):', destinations);
+      this.selectedDestinationCount = destinations?.length || 0;
     });
 
-    this.travelForm.get('dateRange')?.valueChanges.subscribe(dateRange => {
+    // When date range changes, calculate trip duration
+    this.travelForm.get('dateRange')?.valueChanges.subscribe((dateRange: DateRange) => {
       console.log('Date range:', dateRange);
+      if (dateRange?.departureDate && dateRange?.returnDate) {
+        const departure = new Date(dateRange.departureDate);
+        const returnDate = new Date(dateRange.returnDate);
+        const diffTime = Math.abs(returnDate.getTime() - departure.getTime());
+        this.tripDurationDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      } else {
+        this.tripDurationDays = 0;
+      }
+      this.calculateTotalPremium();
     });
 
+    // When cover type changes, update display name and recalculate premium
     this.travelForm.get('coverType')?.valueChanges.subscribe(coverType => {
       console.log('Cover type:', coverType);
+      const selected = this.coverTypes.find(c => c.value === coverType?.value);
+      this.selectedCoverTypeName = selected?.label || '';
+      this.calculateTotalPremium();
     });
 
+    // When nationality changes, log for demo
     this.travelForm.get('nationality')?.valueChanges.subscribe(nationality => {
       console.log('Nationality:', nationality);
     });
 
+    // When activities change, update count
+    // Note: activities is now an array of objects [{ value: 'diving', label: 'Scuba Diving' }, ...]
     this.travelForm.get('activities')?.valueChanges.subscribe(activities => {
-      console.log('Selected activities:', activities);
+      console.log('Selected activities (full objects):', activities);
+      this.selectedActivitiesCount = activities?.length || 0;
+      this.calculateTotalPremium();
     });
 
+    // When region changes, update display name
     this.travelForm.get('region')?.valueChanges.subscribe(region => {
       console.log('Selected region:', region);
+      const selected = this.regions.find(r => r.value === region?.value);
+      this.selectedRegionName = selected?.label || '';
+      this.calculateTotalPremium();
     });
 
+    // When coverage changes, update display and recalculate premium
     this.travelForm.get('coverage')?.valueChanges.subscribe(coverage => {
       console.log('Selected coverage:', coverage);
+      const selected = this.coverageOptions.find(c => c.value === coverage?.value);
+      this.selectedCoverageName = selected?.leftLabel || '';
+      this.calculateTotalPremium();
     });
   }
 
@@ -333,7 +383,14 @@ export class TravelBookingComponent implements OnInit {
       return;
     }
 
-    console.log('Form submitted successfully:', this.travelForm.value);
+    // Use getRawValue() to include disabled controls if needed
+    const formValue = this.travelForm.value;  // Excludes disabled fields
+    const rawValue = this.travelForm.getRawValue();  // Includes disabled fields
+
+    console.log('Form submitted successfully!');
+    console.log('Form value (excludes disabled):', formValue);
+    console.log('Raw value (includes disabled):', rawValue);
+
     alert('Form submitted! Check console for values.');
   }
 
@@ -342,12 +399,15 @@ export class TravelBookingComponent implements OnInit {
       tripType: 'single',
       destinations: [],
       dateRange: null,
-      region: 'region4',
-      coverage: '5000',
-      coverType: 'individual',
+      region: null,
+      coverage: null,
+      coverType: null,
       nationality: '',
       activities: []
     });
+
+    // Re-initialize field states after reset
+    this.updateFieldsBasedOnTripType('single');
   }
 
   private markFormGroupTouched(formGroup: FormGroup) {
@@ -357,10 +417,76 @@ export class TravelBookingComponent implements OnInit {
     });
   }
 
+  // DEMO: Conditional validation using enable/disable (cleaner than validator management)
+  private updateFieldsBasedOnTripType(tripType: string): void {
+    const destinationsControl = this.travelForm.get('destinations');
+    const regionControl = this.travelForm.get('region');
+
+    if (tripType === 'single') {
+      // Single Trip: Enable destinations, disable region
+      destinationsControl?.enable({ emitEvent: false });
+      regionControl?.disable({ emitEvent: false });
+
+      console.log('Single Trip Mode: Destinations enabled (required), Region disabled');
+    } else if (tripType === 'annual') {
+      // Annual Multi-Trip: Disable destinations, enable region
+      destinationsControl?.disable({ emitEvent: false });
+      regionControl?.enable({ emitEvent: false });
+
+      console.log('Annual Multi-Trip Mode: Region enabled (required), Destinations disabled');
+    }
+
+    // Note: Disabled controls are automatically excluded from validation
+    // No need to manage validators manually!
+  }
+
+  // DEMO: Calculate premium based on multiple component values (inter-component logic)
+  private calculateTotalPremium(): void {
+    let basePremium = 50; // Base price
+
+    // Add premium based on destination count
+    basePremium += this.selectedDestinationCount * 15;
+
+    // Add premium based on trip duration
+    basePremium += this.tripDurationDays * 2;
+
+    // Multiply by cover type multiplier
+    const coverType = this.travelForm.get('coverType')?.value;
+    const coverTypeMultiplier: { [key: string]: number } = {
+      'individual': 1,
+      'couple': 1.8,
+      'family': 2.5,
+      'group': 2.2
+    };
+    basePremium *= coverTypeMultiplier[coverType?.value] || 1;
+
+    // Add coverage amount premium
+    const coverage = this.travelForm.get('coverage')?.value;
+    const coverageValue = parseFloat(coverage?.value || '0');
+    if (coverageValue > 0) {
+      basePremium += coverageValue / 1000 * 2;
+    }
+
+    // Add premium for activities
+    basePremium += this.selectedActivitiesCount * 10;
+
+    this.totalPremium = Math.round(basePremium * 100) / 100;
+  }
+
   getDestinationError(): string {
     const control = this.travelForm.get('destinations');
-    if (control?.hasError('required') && control.touched) {
+    const tripType = this.travelForm.get('tripType')?.value;
+    if (tripType === 'single' && control?.hasError('required') && control.touched) {
       return 'Please select at least one destination';
+    }
+    return '';
+  }
+
+  getRegionError(): string {
+    const control = this.travelForm.get('region');
+    const tripType = this.travelForm.get('tripType')?.value;
+    if (tripType === 'annual' && control?.hasError('required') && control.touched) {
+      return 'Please select a region for annual multi-trip';
     }
     return '';
   }
@@ -379,5 +505,15 @@ export class TravelBookingComponent implements OnInit {
       return 'Please select your nationality';
     }
     return '';
+  }
+
+  // Helper method to check if trip type is single
+  isSingleTrip(): boolean {
+    return this.travelForm.get('tripType')?.value === 'single';
+  }
+
+  // Helper method to check if trip type is annual multi-trip
+  isAnnualMultiTrip(): boolean {
+    return this.travelForm.get('tripType')?.value === 'annual';
   }
 }

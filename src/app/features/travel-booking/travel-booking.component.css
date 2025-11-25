@@ -100,6 +100,94 @@ mat-form-field {
   color: #555;
 }
 
+/* Summary Card - Inter-component Communication Demo */
+.summary-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+.summary-card mat-card-header {
+  padding: 16px 16px 0;
+}
+
+.summary-card mat-card-title {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.summary-card mat-card-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.summary-item.total-premium {
+  grid-column: 1 / -1;
+  background: rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.summary-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.premium-value {
+  font-size: 28px;
+  color: #ffd700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.demo-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  border-left: 4px solid #ffd700;
+}
+
+.demo-note mat-icon {
+  flex-shrink: 0;
+  color: #ffd700;
+}
+
+.demo-note span {
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.95);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .travel-booking-container {
@@ -125,5 +213,13 @@ mat-form-field {
 
   .form-actions button {
     width: 100%;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-item.total-premium {
+    grid-column: 1;
   }
 }
