@@ -1,4 +1,4 @@
-<mat-form-field class="autocomplete-input" [class.has-error]="shouldShowError()">
+<mat-form-field class="autocomplete-input" [class.has-error]="shouldShowError()" [class.hide-required-asterisk]="!showRequiredAsterisk">
   <mat-label>
     {{ label }}
     <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>

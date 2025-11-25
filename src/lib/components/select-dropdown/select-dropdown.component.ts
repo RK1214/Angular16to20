@@ -32,6 +32,7 @@ export class SelectDropdownComponent implements ControlValueAccessor {
   @Input() showInfoIcon: boolean = false;
   @Input() infoTitle: string = 'Information';
   @Input() infoMessage: string = '';
+  @Input() showRequiredAsterisk: boolean = false;
 
   selectedValue: SelectOption | null = null;
 

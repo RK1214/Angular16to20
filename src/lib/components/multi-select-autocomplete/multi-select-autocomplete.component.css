@@ -3,6 +3,11 @@
   width: 100%;
 }
 
+/* Hide required asterisk by default */
+.multi-select-autocomplete.hide-required-asterisk ::ng-deep .mat-mdc-form-field-required-marker {
+  display: none !important;
+}
+
 /* Info icon styling */
 .info-icon {
   font-size: 16px;

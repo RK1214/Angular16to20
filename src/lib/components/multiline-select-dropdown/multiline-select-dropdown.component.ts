@@ -33,6 +33,7 @@ export class MultilineSelectDropdownComponent implements ControlValueAccessor {
   @Input() showInfoIcon: boolean = false;
   @Input() infoTitle: string = 'Information';
   @Input() infoMessage: string = '';
+  @Input() showRequiredAsterisk: boolean = false;
 
   selectedValue: MultilineSelectOption | null = null;
 

@@ -48,6 +48,9 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
   @Input() showInfoIcon: boolean = false;
   @Input() infoTitle: string = 'Information';
   @Input() infoMessage: string = '';
+  @Input() showRequiredAsterisk: boolean = false;
+  @Input() allowedPattern: string = '';  // Regex pattern for allowed characters (e.g., '^[a-zA-Z0-9]*$')
+  @Input() disallowedPattern: string = '';  // Regex pattern for disallowed characters (e.g., '[^a-zA-Z0-9]')
 
   @ViewChild('input') input!: ElementRef<HTMLInputElement>;
   @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
@@ -390,17 +393,44 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
   }
 
   onInputKeydown(event: KeyboardEvent): void {
-    // Open panel on ArrowDown key press
-    if (event.key === 'ArrowDown' && this.autocompleteTrigger) {
-      event.preventDefault();
-      this.shouldOpenPanel = true;
-      this.autocompleteTrigger.openPanel();
-    } else if (event.key !== 'Escape' && event.key !== 'Enter' && event.key !== 'Tab' &&
-               event.key !== 'ArrowUp' && event.key !== 'ArrowDown' &&
-               event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
-      // Allow panel to open when user types
-      this.shouldOpenPanel = true;
+    // Skip validation for special keys
+    const specialKeys = ['Escape', 'Enter', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Backspace', 'Delete', 'Home', 'End'];
+
+    if (specialKeys.includes(event.key)) {
+      // Open panel on ArrowDown key press
+      if (event.key === 'ArrowDown' && this.autocompleteTrigger) {
+        event.preventDefault();
+        this.shouldOpenPanel = true;
+        this.autocompleteTrigger.openPanel();
+      }
+      return;
     }
+
+    // Validate input character against patterns
+    if (this.allowedPattern || this.disallowedPattern) {
+      const char = event.key;
+
+      // Check allowed pattern - if specified, only these characters are allowed
+      if (this.allowedPattern && char.length === 1) {
+        const allowedRegex = new RegExp(this.allowedPattern);
+        if (!allowedRegex.test(char)) {
+          event.preventDefault();
+          return;
+        }
+      }
+
+      // Check disallowed pattern - if specified, these characters are blocked
+      if (this.disallowedPattern && char.length === 1) {
+        const disallowedRegex = new RegExp(this.disallowedPattern);
+        if (disallowedRegex.test(char)) {
+          event.preventDefault();
+          return;
+        }
+      }
+    }
+
+    // Allow panel to open when user types
+    this.shouldOpenPanel = true;
   }
 
   onPanelOpened(): void {
