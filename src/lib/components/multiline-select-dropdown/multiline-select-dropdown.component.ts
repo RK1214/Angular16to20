@@ -7,6 +7,7 @@ export interface MultilineSelectOption {
   value: any;
   label: string;
   description: string;
+  isDefault?: boolean;
 }
 
 @Component({
@@ -25,7 +26,6 @@ export interface MultilineSelectOption {
 export class MultilineSelectDropdownComponent implements ControlValueAccessor {
   @Input() label: string = 'Select option';
   @Input() options: MultilineSelectOption[] = [];
-  @Input() defaultValue: any = null;
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;
   @Input() hint: string = '';
@@ -81,15 +81,10 @@ export class MultilineSelectDropdownComponent implements ControlValueAccessor {
         // Otherwise, find the option by value
         this.selectedValue = this.options.find(opt => opt.value === value) || null;
       }
-    } else if (this.defaultValue !== null && this.defaultValue !== undefined) {
-      // Handle default value
-      if (typeof this.defaultValue === 'object' && this.defaultValue.hasOwnProperty('value')) {
-        this.selectedValue = this.defaultValue;
-      } else {
-        this.selectedValue = this.options.find(opt => opt.value === this.defaultValue) || null;
-      }
     } else {
-      this.selectedValue = null;
+      // Look for a default option in the options array
+      const defaultOption = this.options.find(opt => opt.isDefault === true);
+      this.selectedValue = defaultOption || null;
     }
   }
 
