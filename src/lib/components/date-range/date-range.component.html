@@ -3,7 +3,12 @@
   <mat-form-field class="date-field" floatLabel="always">
     <mat-label>
       {{ departureLabel }}
-      <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+      <span *ngIf="showInfoIcon && departureControl.value"
+            class="custom-info-icon"
+            (click)="openInfoDialog(); $event.stopPropagation()"
+            role="button"
+            tabindex="0">
+      </span>
     </mat-label>
     <input
       matInput
@@ -26,7 +31,12 @@
   <mat-form-field class="date-field" floatLabel="always">
     <mat-label>
       {{ returnLabel }}
-      <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+      <span *ngIf="showInfoIcon && returnControl.value"
+            class="custom-info-icon"
+            (click)="openInfoDialog(); $event.stopPropagation()"
+            role="button"
+            tabindex="0">
+      </span>
     </mat-label>
     <input
       matInput

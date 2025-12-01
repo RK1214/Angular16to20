@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, forwardRef, ViewChild, ElementRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, Validator, NG_VALIDATORS, ValidationErrors, AbstractControl } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
@@ -27,10 +27,15 @@ export interface AutocompleteGroup {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => MultiSelectAutocompleteComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => MultiSelectAutocompleteComponent),
+      multi: true
     }
   ]
 })
-export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
   @Input() label: string = 'Select options';
   @Input() placeholder: string = '';
   @Input() options: AutocompleteOption[] = [];
@@ -61,6 +66,7 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
   maxSelectionReached: boolean = false;
   showMaxSelectionError: boolean = false; // For displaying error without affecting form validity
   isFocused: boolean = false;
+  isTouched: boolean = false;
   private shouldOpenPanel: boolean = false;
   private justFocused: boolean = false;
   private errorTimeout: any = null;
@@ -69,6 +75,7 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
+  private onValidatorChange: () => void = () => {};
 
   constructor(private dialog: MatDialog) {}
 
@@ -250,6 +257,8 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
       this.onChange(selectedObject);
     }
     this.onTouched();
+    // Trigger validation change
+    this.onValidatorChange();
   }
 
   // ControlValueAccessor implementation
@@ -370,13 +379,43 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
         return;
       }
       this.isFocused = false;
+      this.isTouched = true;
       this.onTouched();
     }, 150);
   }
 
   shouldShowError(): boolean {
     // Only show validation error when not focused and not interacting with panel
-    return !this.isFocused && !this.isInteractingWithPanel && !!this.errorMessage;
+    // Check both custom errorMessage and built-in validation errors
+    if (this.isFocused || this.isInteractingWithPanel) {
+      return false;
+    }
+
+    // Show custom error message if provided (assumes parent is handling touched state)
+    if (this.errorMessage) {
+      return true;
+    }
+
+    // Show validation error if required, empty, and has been touched
+    if (this.required && this.selectedItems.length === 0 && this.isTouched) {
+      return true;
+    }
+
+    return false;
+  }
+
+  getErrorMessage(): string {
+    // Return custom error message if provided
+    if (this.errorMessage) {
+      return this.errorMessage;
+    }
+
+    // Return required error message
+    if (this.required && this.selectedItems.length === 0) {
+      return `${this.label} is required`;
+    }
+
+    return '';
   }
 
   openInfoDialog(): void {
@@ -510,5 +549,19 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
         this.onTouched();
       }
     }, 100);
+  }
+
+  // Validator implementation
+  validate(control: AbstractControl): ValidationErrors | null {
+    // If required and no items selected, return validation error
+    if (this.required && this.selectedItems.length === 0) {
+      return { required: true };
+    }
+
+    return null;
+  }
+
+  registerOnValidatorChange(fn: () => void): void {
+    this.onValidatorChange = fn;
   }
 }

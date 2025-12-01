@@ -7,20 +7,29 @@
   display: none !important;
 }
 
-/* Info icon styling */
-.info-icon {
-  font-size: 16px;
+/* Info icon styling - visible when label is floated (has value) */
+.custom-info-icon {
+  display: inline-block;
   width: 16px;
   height: 16px;
   vertical-align: middle;
   margin-left: 4px;
-  color: #999;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: opacity 0.2s ease;
+  background-image: url('/assets/icons/info-icon.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.54;
 }
 
-.info-icon:hover {
-  color: #00bcd4;
+.custom-info-icon:hover {
+  opacity: 1;
+}
+
+/* Change info icon opacity when focused */
+::ng-deep .autocomplete-input.mat-focused .custom-info-icon {
+  opacity: 1;
 }
 
 /* White background, no borders */
@@ -198,21 +207,32 @@
   font-size: 16px;
 }
 
-/* Dropdown arrow styling */
-.dropdown-arrow {
-  cursor: pointer;
-  user-select: none;
-  color: rgba(0, 0, 0, 0.54);
-  transition: color 0.2s;
+/* Dropdown arrow button styling - always visible, doesn't rotate */
+::ng-deep .autocomplete-input .custom-dropdown-arrow {
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  min-width: 40px !important;
+  background-image: url('/assets/icons/dropdown-arrow.svg');
+  background-size: 24px 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.54;
+  transition: opacity 0.2s ease;
 }
 
-.dropdown-arrow:hover:not(.disabled) {
-  color: rgba(0, 0, 0, 0.87);
+::ng-deep .autocomplete-input .custom-dropdown-arrow:hover:not([disabled]) {
+  opacity: 0.87;
 }
 
-.dropdown-arrow.disabled {
-  cursor: not-allowed;
+/* Change arrow opacity when focused */
+::ng-deep .autocomplete-input.mat-focused .custom-dropdown-arrow:not([disabled]) {
+  opacity: 1;
+}
+
+::ng-deep .autocomplete-input .custom-dropdown-arrow[disabled] {
   opacity: 0.38;
+  cursor: not-allowed;
 }
 
 /* External error message styling */

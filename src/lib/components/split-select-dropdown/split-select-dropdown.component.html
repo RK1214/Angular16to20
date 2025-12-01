@@ -1,7 +1,12 @@
-<mat-form-field class="split-select-dropdown" [class.hide-required-asterisk]="!showRequiredAsterisk" floatLabel="always">
+<mat-form-field class="split-select-dropdown" [class.hide-required-asterisk]="!showRequiredAsterisk" [class.has-value]="selectedValue !== null" floatLabel="always">
   <mat-label>
     {{ label }}
-    <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+    <span *ngIf="showInfoIcon && selectedValue !== null"
+          class="custom-info-icon"
+          (click)="openInfoDialog(); $event.stopPropagation()"
+          role="button"
+          tabindex="0">
+    </span>
   </mat-label>
 
   <mat-select
@@ -10,7 +15,8 @@
     (focus)="onFocus()"
     [disabled]="disabled"
     [required]="required"
-    [hideSingleSelectionIndicator]="true">
+    [hideSingleSelectionIndicator]="true"
+    [disableOptionCentering]="true">
 
     <mat-select-trigger>
       <div class="trigger-content" *ngIf="getSelectedOption()">
@@ -34,6 +40,16 @@
       <mat-icon *ngIf="isSelected(option)" class="check-icon">check</mat-icon>
     </mat-option>
   </mat-select>
+
+  <!-- Custom dropdown arrow button with SVG -->
+  <button
+    mat-icon-button
+    matSuffix
+    type="button"
+    class="custom-dropdown-arrow"
+    [disabled]="disabled"
+    [attr.aria-label]="'Toggle dropdown'">
+  </button>
 
   <mat-hint *ngIf="hint">{{ hint }}</mat-hint>
   <mat-error *ngIf="errorMessage">{{ errorMessage }}</mat-error>

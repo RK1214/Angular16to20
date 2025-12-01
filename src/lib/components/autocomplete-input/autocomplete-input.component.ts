@@ -1,5 +1,5 @@
 import { Component, Input, OnInit, OnDestroy, forwardRef, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, Validator, NG_VALIDATORS, ValidationErrors, AbstractControl } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
@@ -21,10 +21,15 @@ export interface AutocompleteInputOption {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => AutocompleteInputComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => AutocompleteInputComponent),
+      multi: true
     }
   ]
 })
-export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
   @Input() label: string = 'Select or type';
   @Input() placeholder: string = '';
   @Input() options: AutocompleteInputOption[] = [];
@@ -48,6 +53,7 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
   filteredOptions$!: Observable<AutocompleteInputOption[]>;
   selectedValue: string = '';
   isFocused: boolean = false;
+  isTouched: boolean = false;
   private blurTimeout: any = null;
   private isInteractingWithPanel: boolean = false;
   private shouldOpenPanel: boolean = false;
@@ -55,6 +61,7 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
+  private onValidatorChange: () => void = () => {};
 
   constructor(private dialog: MatDialog) {}
 
@@ -81,6 +88,8 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
       this.selectedValue = stringValue;
       this.onChange(stringValue);
       this.onTouched();
+      // Trigger validation change
+      this.onValidatorChange();
     });
   }
 
@@ -237,6 +246,7 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
         return;
       }
       this.isFocused = false;
+      this.isTouched = true;
       this.onTouched();
     }, 150);
   }
@@ -307,8 +317,36 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
   }
 
   shouldShowError(): boolean {
-    // Only show error when not focused and not interacting with panel
-    return !this.isFocused && !this.isInteractingWithPanel && !!this.errorMessage;
+    // Only show validation error when not focused and not interacting with panel
+    if (this.isFocused || this.isInteractingWithPanel) {
+      return false;
+    }
+
+    // Show custom error message if provided (assumes parent is handling touched state)
+    if (this.errorMessage) {
+      return true;
+    }
+
+    // Show validation error if required, empty, and has been touched
+    if (this.required && !this.selectedValue.trim() && this.isTouched) {
+      return true;
+    }
+
+    return false;
+  }
+
+  getErrorMessage(): string {
+    // Return custom error message if provided
+    if (this.errorMessage) {
+      return this.errorMessage;
+    }
+
+    // Return required error message
+    if (this.required && !this.selectedValue.trim()) {
+      return `${this.label} is required`;
+    }
+
+    return '';
   }
 
   openInfoDialog(): void {
@@ -353,5 +391,19 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
     } else {
       this.inputControl.enable({ emitEvent: false });
     }
+  }
+
+  // Validator implementation
+  validate(control: AbstractControl): ValidationErrors | null {
+    // If required and no value, return validation error
+    if (this.required && !this.selectedValue.trim()) {
+      return { required: true };
+    }
+
+    return null;
+  }
+
+  registerOnValidatorChange(fn: () => void): void {
+    this.onValidatorChange = fn;
   }
 }

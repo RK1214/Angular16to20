@@ -102,19 +102,29 @@
   top: 18px !important;
 }
 
-.info-icon {
-  font-size: 16px;
+/* Info icon styling - visible when label is floated (has value) */
+.custom-info-icon {
+  display: inline-block;
   width: 16px;
   height: 16px;
   vertical-align: middle;
   margin-left: 4px;
-  color: #999;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: opacity 0.2s ease;
+  background-image: url('/assets/icons/info-icon.svg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.54;
 }
 
-.info-icon:hover {
-  color: #00bcd4;
+.custom-info-icon:hover {
+  opacity: 1;
+}
+
+/* Change info icon opacity when focused */
+::ng-deep .date-field.mat-focused .custom-info-icon {
+  opacity: 1;
 }
 
 /* Date range highlighting in calendar */

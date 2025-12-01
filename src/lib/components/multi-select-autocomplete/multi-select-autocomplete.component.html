@@ -1,7 +1,12 @@
 <mat-form-field [appearance]="appearance" class="multi-select-autocomplete" [class.has-error]="shouldShowError()" [class.is-empty]="selectedItems.length === 0" [class.hide-required-asterisk]="!showRequiredAsterisk">
   <mat-label>
     {{ label }}
-    <mat-icon *ngIf="showInfoIcon" class="info-icon" (click)="openInfoDialog(); $event.stopPropagation()">info</mat-icon>
+    <span *ngIf="showInfoIcon && (selectedItems.length > 0 || isFocused)"
+          class="custom-info-icon"
+          (click)="openInfoDialog(); $event.stopPropagation()"
+          role="button"
+          tabindex="0">
+    </span>
   </mat-label>
 
   <!-- Selected items as chips -->
@@ -35,16 +40,17 @@
     />
   </mat-chip-grid>
 
-  <!-- Dropdown arrow icon -->
-  <mat-icon
+  <!-- Dropdown arrow button with custom SVG -->
+  <button
+    mat-icon-button
     matSuffix
-    class="dropdown-arrow"
+    type="button"
+    class="custom-dropdown-arrow"
     (mousedown)="onArrowMouseDown($event)"
     (click)="toggleDropdown()"
-    [class.disabled]="disabled"
+    [disabled]="disabled"
     [attr.aria-label]="'Toggle dropdown'">
-    arrow_drop_down
-  </mat-icon>
+  </button>
 
   <!-- Hint text -->
   <mat-hint *ngIf="hint && !showMaxSelectionError && !shouldShowError()">{{ hint }}</mat-hint>
@@ -95,5 +101,5 @@
 <!-- External error message display -->
 <div *ngIf="showMaxSelectionError || shouldShowError()" class="external-error-message">
   <span *ngIf="showMaxSelectionError">{{ maxSelectionError }} ({{ selectedItems.length }}/{{ maxSelection }})</span>
-  <span *ngIf="shouldShowError() && !showMaxSelectionError">{{ errorMessage }}</span>
+  <span *ngIf="shouldShowError() && !showMaxSelectionError">{{ getErrorMessage() }}</span>
 </div>
