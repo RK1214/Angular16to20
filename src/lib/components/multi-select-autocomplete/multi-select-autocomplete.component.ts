@@ -232,6 +232,18 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, DoCh
     }
   }
 
+  onOptionTouchStart(event: TouchEvent): void {
+    // For touch events, DON'T preventDefault to allow selection in responsive mode
+    // But DO stop propagation to prevent ripple effects on parent elements
+    event.stopPropagation();
+
+    // Clear the blur timeout
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
+  }
+
   onOptionSelected(event: MatAutocompleteSelectedEvent): void {
     // Clear any pending blur timeout when option is selected
     if (this.blurTimeout) {

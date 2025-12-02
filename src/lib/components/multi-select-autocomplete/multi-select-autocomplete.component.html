@@ -78,7 +78,7 @@
               *ngFor="let option of group.options"
               [value]="option"
               (mousedown)="onOptionMouseDown($event)"
-              (touchstart)="onOptionMouseDown($event)"
+              (touchstart)="onOptionTouchStart($event)"
               class="autocomplete-option">
               {{ option.text }}
             </mat-option>
@@ -92,7 +92,7 @@
           *ngFor="let option of filtered"
           [value]="option"
           (mousedown)="onOptionMouseDown($event)"
-          (touchstart)="onOptionMouseDown($event)"
+          (touchstart)="onOptionTouchStart($event)"
           class="autocomplete-option">
           {{ option.text }}
         </mat-option>
