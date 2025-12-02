@@ -1,6 +1,7 @@
-import { Component, Input, OnInit, OnDestroy, forwardRef, ViewChild, ElementRef } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, Validator, NG_VALIDATORS, ValidationErrors, AbstractControl } from '@angular/forms';
+import { Component, Input, OnInit, OnDestroy, DoCheck, forwardRef, ViewChild, ElementRef, Optional, Self, ChangeDetectorRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ValidationErrors, AbstractControl, FormGroupDirective, NgForm, NgControl, ValidatorFn } from '@angular/forms';
 import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
@@ -17,25 +18,42 @@ export interface AutocompleteGroup {
   options: AutocompleteOption[];
 }
 
+class MultiSelectErrorStateMatcher implements ErrorStateMatcher {
+  constructor(private component: MultiSelectAutocompleteComponent) {}
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    // Always show max selection error (informative, doesn't block form)
+    if (this.component.showMaxSelectionError) {
+      return true;
+    }
+
+    // Don't show validation errors while user is focused on the field
+    if (this.component.isFocused || this.component.isInteractingWithPanel) {
+      return false;
+    }
+
+    // Check if there are errors to display
+    const hasErrors = this.component.shouldShowError();
+
+    // Also check parent control state if available
+    const parentControl = this.component.ngControl?.control;
+    const parentHasErrors = !!(
+      parentControl &&
+      parentControl.invalid &&
+      (parentControl.touched || parentControl.dirty)
+    );
+
+    return hasErrors || parentHasErrors;
+  }
+}
+
 @Component({
   selector: 'app-multi-select-autocomplete',
   templateUrl: './multi-select-autocomplete.component.html',
   styleUrls: ['./multi-select-autocomplete.component.css'],
-  standalone: false,
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MultiSelectAutocompleteComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MultiSelectAutocompleteComponent),
-      multi: true
-    }
-  ]
+  standalone: false
 })
-export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, DoCheck, ControlValueAccessor {
   @Input() label: string = 'Select options';
   @Input() placeholder: string = '';
   @Input() options: AutocompleteOption[] = [];
@@ -60,27 +78,59 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
   @ViewChild('input') input!: ElementRef<HTMLInputElement>;
   @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
 
-  searchControl = new FormControl('');
+  searchControl = new FormControl('', (control: AbstractControl): ValidationErrors | null => {
+    // Custom validator that checks if the multi-select is empty and required
+    if (this.required && this.selectedItems.length === 0 && this.isTouched) {
+      return { required: true };
+    }
+    return null;
+  });
   selectedItems: AutocompleteOption[] = [];
   filteredOptions$!: Observable<AutocompleteOption[] | AutocompleteGroup[]>;
   maxSelectionReached: boolean = false;
   showMaxSelectionError: boolean = false; // For displaying error without affecting form validity
   isFocused: boolean = false;
   isTouched: boolean = false;
+  errorStateMatcher: ErrorStateMatcher;
+  isFieldEmpty: boolean = true;
   private shouldOpenPanel: boolean = false;
   private justFocused: boolean = false;
   private errorTimeout: any = null;
   private blurTimeout: any = null;
-  private isInteractingWithPanel: boolean = false;
+  isInteractingWithPanel: boolean = false;
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
-  private onValidatorChange: () => void = () => {};
 
-  constructor(private dialog: MatDialog) {}
+  constructor(
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef,
+    @Optional() @Self() public ngControl: NgControl
+  ) {
+    // Set the value accessor manually to avoid circular dependency
+    if (this.ngControl) {
+      this.ngControl.valueAccessor = this;
+    }
+
+    // Create error state matcher
+    this.errorStateMatcher = new MultiSelectErrorStateMatcher(this);
+  }
 
   ngOnInit(): void {
     this.setupFilteredOptions();
+
+    // Subscribe to input changes to update isEmpty state
+    this.searchControl.valueChanges.subscribe(() => {
+      this.updateEmptyState();
+    });
+
+    // Initial empty state
+    this.updateEmptyState();
+  }
+
+  ngDoCheck(): void {
+    // Don't use ngDoCheck for error syncing - it causes too many updates
+    // Errors are synced only on blur and when errorMessage changes
   }
 
   ngOnDestroy(): void {
@@ -172,6 +222,16 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
     return JSON.stringify(option1.value) === JSON.stringify(option2.value);
   }
 
+  onOptionMouseDown(event: MouseEvent): void {
+    // Prevent input blur when clicking on option
+    event.preventDefault();
+    // Clear any pending blur timeout
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
+  }
+
   onOptionSelected(event: MatAutocompleteSelectedEvent): void {
     // Clear any pending blur timeout when option is selected
     if (this.blurTimeout) {
@@ -207,11 +267,17 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
       if (!this.selectedItems.some(item => this.compareOptions(item, selectedOption))) {
         this.selectedItems.push(selectedOption);
         this.checkMaxSelection();
+        // Revalidate when item is selected
+        this.searchControl.updateValueAndValidity();
+        this.updateEmptyState();
         this.emitValue();
       }
     } else {
       // Single select - replace
       this.selectedItems = [selectedOption];
+      // Revalidate when item is selected
+      this.searchControl.updateValueAndValidity();
+      this.updateEmptyState();
       this.emitValue();
     }
 
@@ -239,7 +305,11 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
         this.clearErrorAutoHide();
       }
 
+      // Revalidate if field becomes empty
+      this.searchControl.updateValueAndValidity();
+
       this.checkMaxSelection();
+      this.updateEmptyState();
       this.emitValue();
     }
 
@@ -257,8 +327,6 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
       this.onChange(selectedObject);
     }
     this.onTouched();
-    // Trigger validation change
-    this.onValidatorChange();
   }
 
   // ControlValueAccessor implementation
@@ -372,28 +440,37 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
   }
 
   onInputBlur(): void {
-    // Delay blur handling to prevent flickering when clicking dropdown options or arrow icon
+    // Delay blur handling to prevent flickering when clicking dropdown options
     this.blurTimeout = setTimeout(() => {
       // Don't process blur if autocomplete panel is open
       if (this.autocompleteTrigger?.panelOpen) {
         return;
       }
+
       this.isFocused = false;
       this.isTouched = true;
       this.onTouched();
-    }, 150);
+
+      // Trigger validation on searchControl
+      this.searchControl.updateValueAndValidity();
+      this.searchControl.markAsTouched();
+    }, 200);
+  }
+
+  updateEmptyState(): void {
+    // Field is empty if there are no selected chips AND no text typed in the input
+    const hasSelectedItems = this.selectedItems.length > 0;
+    // Check both FormControl value AND actual DOM input value
+    const hasSearchControlText = this.searchControl.value && String(this.searchControl.value).trim().length > 0;
+    const hasInputElementText = this.input?.nativeElement?.value && this.input.nativeElement.value.trim().length > 0;
+
+    this.isFieldEmpty = !hasSelectedItems && !hasSearchControlText && !hasInputElementText;
   }
 
   shouldShowError(): boolean {
     // Only show validation error when not focused and not interacting with panel
-    // Check both custom errorMessage and built-in validation errors
     if (this.isFocused || this.isInteractingWithPanel) {
       return false;
-    }
-
-    // Show custom error message if provided (assumes parent is handling touched state)
-    if (this.errorMessage) {
-      return true;
     }
 
     // Show validation error if required, empty, and has been touched
@@ -405,13 +482,13 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
   }
 
   getErrorMessage(): string {
-    // Return custom error message if provided
-    if (this.errorMessage) {
-      return this.errorMessage;
+    // Don't show required error when showing max selection error
+    if (this.showMaxSelectionError) {
+      return '';
     }
 
-    // Return required error message
-    if (this.required && this.selectedItems.length === 0) {
+    // Return required error message from internal validation
+    if (this.required && this.selectedItems.length === 0 && this.isTouched) {
       return `${this.label} is required`;
     }
 
@@ -551,17 +628,8 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, Cont
     }, 100);
   }
 
-  // Validator implementation
-  validate(control: AbstractControl): ValidationErrors | null {
-    // If required and no items selected, return validation error
-    if (this.required && this.selectedItems.length === 0) {
-      return { required: true };
-    }
-
-    return null;
-  }
-
-  registerOnValidatorChange(fn: () => void): void {
-    this.onValidatorChange = fn;
+  private updateSearchControlErrors(): void {
+    // Trigger revalidation
+    this.searchControl.updateValueAndValidity();
   }
 }

@@ -94,9 +94,9 @@ body {
   opacity: 0 !important;
 }
 
-/* Hide the bottom border line */
+/* Show subscript wrapper for hints and errors */
 .mat-mdc-form-field-subscript-wrapper {
-  display: none;
+  display: block;
 }
 
 /* Only show underline */

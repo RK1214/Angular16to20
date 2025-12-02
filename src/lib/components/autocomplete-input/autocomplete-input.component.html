@@ -19,7 +19,8 @@
     (click)="onInputClick()"
     (keydown)="onInputKeydown($event)"
     [disabled]="disabled"
-    [required]="required">
+    [required]="required"
+    [errorStateMatcher]="errorStateMatcher">
 
   <!-- Custom dropdown arrow button with SVG -->
   <button
@@ -27,6 +28,7 @@
     matSuffix
     type="button"
     class="custom-dropdown-arrow"
+    disableRipple
     (mousedown)="onArrowMouseDown($event)"
     (click)="toggleDropdown()"
     [disabled]="disabled"
@@ -58,9 +60,5 @@
   </mat-autocomplete>
 
   <mat-hint *ngIf="hint && !shouldShowError()">{{ hint }}</mat-hint>
+  <mat-error>{{ getErrorMessage() }}</mat-error>
 </mat-form-field>
-
-<!-- External error message display -->
-<div *ngIf="shouldShowError()" class="external-error-message">
-  {{ getErrorMessage() }}
-</div>

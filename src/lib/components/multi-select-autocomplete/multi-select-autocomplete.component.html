@@ -1,4 +1,4 @@
-<mat-form-field [appearance]="appearance" class="multi-select-autocomplete" [class.has-error]="shouldShowError()" [class.is-empty]="selectedItems.length === 0" [class.hide-required-asterisk]="!showRequiredAsterisk">
+<mat-form-field [appearance]="appearance" class="multi-select-autocomplete" [class.has-error]="shouldShowError()" [class.is-empty]="isFieldEmpty" [class.hide-required-asterisk]="!showRequiredAsterisk">
   <mat-label>
     {{ label }}
     <span *ngIf="showInfoIcon && (selectedItems.length > 0 || isFocused)"
@@ -10,7 +10,7 @@
   </mat-label>
 
   <!-- Selected items as chips -->
-  <mat-chip-grid #chipGrid>
+  <mat-chip-grid #chipGrid [errorStateMatcher]="errorStateMatcher" [formControl]="searchControl">
     <mat-chip-row
       *ngFor="let item of selectedItems"
       [removable]="!disabled"
@@ -24,7 +24,6 @@
 
     <!-- Input for autocomplete -->
     <input
-      matInput
       #input
       [placeholder]="selectedItems.length === 0 ? placeholder : ''"
       [formControl]="searchControl"
@@ -34,6 +33,7 @@
       (blur)="onInputBlur()"
       (click)="onInputClick()"
       (keydown)="onInputKeydown($event)"
+      (input)="updateEmptyState()"
       [disabled]="disabled"
       autocomplete="off"
       class="chip-input"
@@ -53,7 +53,11 @@
   </button>
 
   <!-- Hint text -->
-  <mat-hint *ngIf="hint && !showMaxSelectionError && !shouldShowError()">{{ hint }}</mat-hint>
+  <!-- <mat-hint *ngIf="hint && !showMaxSelectionError && !shouldShowError()">{{ hint }}</mat-hint> -->
+
+  <!-- Error messages -->
+  <mat-error *ngIf="showMaxSelectionError">{{ maxSelectionError }} ({{ selectedItems.length }}/{{ maxSelection }})</mat-error>
+  <mat-error>{{ getErrorMessage() }}</mat-error>
 
   <!-- Autocomplete panel -->
   <mat-autocomplete
@@ -73,6 +77,8 @@
             <mat-option
               *ngFor="let option of group.options"
               [value]="option"
+              (mousedown)="onOptionMouseDown($event)"
+              (touchstart)="onOptionMouseDown($event)"
               class="autocomplete-option">
               {{ option.text }}
             </mat-option>
@@ -85,6 +91,8 @@
         <mat-option
           *ngFor="let option of filtered"
           [value]="option"
+          (mousedown)="onOptionMouseDown($event)"
+          (touchstart)="onOptionMouseDown($event)"
           class="autocomplete-option">
           {{ option.text }}
         </mat-option>
@@ -97,9 +105,3 @@
     </ng-container>
   </mat-autocomplete>
 </mat-form-field>
-
-<!-- External error message display -->
-<div *ngIf="showMaxSelectionError || shouldShowError()" class="external-error-message">
-  <span *ngIf="showMaxSelectionError">{{ maxSelectionError }} ({{ selectedItems.length }}/{{ maxSelection }})</span>
-  <span *ngIf="shouldShowError() && !showMaxSelectionError">{{ getErrorMessage() }}</span>
-</div>

@@ -1,6 +1,7 @@
-import { Component, Input, OnInit, OnDestroy, forwardRef, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, Validator, NG_VALIDATORS, ValidationErrors, AbstractControl } from '@angular/forms';
+import { Component, Input, OnInit, OnDestroy, DoCheck, forwardRef, ViewChild, Optional, Self, ChangeDetectorRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormControl, ValidationErrors, AbstractControl, FormGroupDirective, NgForm, NgControl } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
@@ -11,32 +12,52 @@ export interface AutocompleteInputOption {
   text: string;
 }
 
+class CustomErrorStateMatcher implements ErrorStateMatcher {
+  constructor(private component: AutocompleteInputComponent) {}
+
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    // Don't show errors while user is focused on the field
+    if (this.component.isFocused || this.component.isInteractingWithPanel) {
+      return false;
+    }
+
+    // Check if there are errors to display
+    const hasErrors = this.component.shouldShowError();
+
+    // Also check parent control state if available
+    const parentControl = this.component.ngControl?.control;
+    const parentHasErrors = !!(
+      parentControl &&
+      parentControl.invalid &&
+      (parentControl.touched || parentControl.dirty)
+    );
+
+    return hasErrors || parentHasErrors;
+  }
+}
+
 @Component({
   selector: 'app-autocomplete-input',
   templateUrl: './autocomplete-input.component.html',
   styleUrls: ['./autocomplete-input.component.css'],
-  standalone: false,
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => AutocompleteInputComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => AutocompleteInputComponent),
-      multi: true
-    }
-  ]
+  standalone: false
 })
-export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class AutocompleteInputComponent implements OnInit, OnDestroy, DoCheck, ControlValueAccessor {
   @Input() label: string = 'Select or type';
   @Input() placeholder: string = '';
   @Input() options: AutocompleteInputOption[] = [];
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;
   @Input() hint: string = '';
-  @Input() errorMessage: string = '';
+  @Input() set errorMessage(value: string) {
+    this._errorMessage = value;
+    // Update errors when errorMessage input changes
+    setTimeout(() => this.updateInputControlErrors(), 0);
+  }
+  get errorMessage(): string {
+    return this._errorMessage;
+  }
+  private _errorMessage: string = '';
   @Input() autoSelectExactMatch: boolean = true;
   @Input() openOnFocus: boolean = false;
   @Input() showInfoIcon: boolean = false;
@@ -54,16 +75,27 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
   selectedValue: string = '';
   isFocused: boolean = false;
   isTouched: boolean = false;
+  isInteractingWithPanel: boolean = false;
+  errorStateMatcher: ErrorStateMatcher;
   private blurTimeout: any = null;
-  private isInteractingWithPanel: boolean = false;
   private shouldOpenPanel: boolean = false;
   private justFocused: boolean = false;
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
-  private onValidatorChange: () => void = () => {};
 
-  constructor(private dialog: MatDialog) {}
+  constructor(
+    private dialog: MatDialog,
+    private cdr: ChangeDetectorRef,
+    @Optional() @Self() public ngControl: NgControl
+  ) {
+    this.errorStateMatcher = new CustomErrorStateMatcher(this);
+
+    // Set the value accessor manually to avoid circular dependency
+    if (this.ngControl) {
+      this.ngControl.valueAccessor = this;
+    }
+  }
 
   ngOnInit(): void {
     this.setupFilteredOptions();
@@ -88,8 +120,6 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
       this.selectedValue = stringValue;
       this.onChange(stringValue);
       this.onTouched();
-      // Trigger validation change
-      this.onValidatorChange();
     });
   }
 
@@ -98,6 +128,19 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
     return this.options.find(option =>
       option.text.toLowerCase() === searchLower
     ) || null;
+  }
+
+  ngDoCheck(): void {
+    // Monitor parent control state changes
+    if (this.ngControl) {
+      const parentControl = this.ngControl.control;
+      if (parentControl && (parentControl.touched || parentControl.dirty)) {
+        // Parent control state changed, update errors
+        if (!this.isFocused) {
+          this.updateInputControlErrors();
+        }
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -173,6 +216,8 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
     }
     // Set focused state to hide error message
     this.isFocused = true;
+    // Clear errors on focus
+    this.inputControl.setErrors(null);
 
     if (this.openOnFocus) {
       // If openOnFocus is enabled, open the dropdown
@@ -248,6 +293,8 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
       this.isFocused = false;
       this.isTouched = true;
       this.onTouched();
+      // Update errors on blur
+      this.updateInputControlErrors();
     }, 150);
   }
 
@@ -336,13 +383,19 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
   }
 
   getErrorMessage(): string {
-    // Return custom error message if provided
-    if (this.errorMessage) {
-      return this.errorMessage;
+    // Return custom error message if provided (from parent form)
+    if (this._errorMessage) {
+      return this._errorMessage;
     }
 
-    // Return required error message
-    if (this.required && !this.selectedValue.trim()) {
+    // Check parent control for errors
+    const parentControl = this.ngControl?.control;
+    if (parentControl?.hasError('required') && (parentControl.touched || parentControl.dirty)) {
+      return `${this.label} is required`;
+    }
+
+    // Return required error message from internal validation
+    if (this.required && !this.selectedValue.trim() && this.isTouched) {
       return `${this.label} is required`;
     }
 
@@ -393,17 +446,20 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy, ControlVal
     }
   }
 
-  // Validator implementation
-  validate(control: AbstractControl): ValidationErrors | null {
-    // If required and no value, return validation error
-    if (this.required && !this.selectedValue.trim()) {
-      return { required: true };
+  private updateInputControlErrors(): void {
+    // Sync errors to inputControl for mat-error to display
+    if (this.shouldShowError()) {
+      if (this.errorMessage) {
+        this.inputControl.setErrors({ custom: true });
+      } else if (this.required && !this.selectedValue.trim()) {
+        this.inputControl.setErrors({ required: true });
+      }
+      this.inputControl.markAsTouched();
+    } else {
+      // Only clear errors if not focused (to prevent error flashing)
+      if (!this.isFocused) {
+        this.inputControl.setErrors(null);
+      }
     }
-
-    return null;
-  }
-
-  registerOnValidatorChange(fn: () => void): void {
-    this.onValidatorChange = fn;
   }
 }

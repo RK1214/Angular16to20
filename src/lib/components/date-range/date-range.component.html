@@ -19,7 +19,7 @@
       (focus)="onDepartureFocus()"
       [disabled]="disabled"
       readonly>
-    <mat-datepicker-toggle matSuffix [for]="departurePicker"></mat-datepicker-toggle>
+    <mat-datepicker-toggle matSuffix [for]="departurePicker" disableRipple></mat-datepicker-toggle>
     <mat-datepicker
       #departurePicker
       [dateClass]="dateClass"
@@ -48,7 +48,7 @@
       (focus)="onReturnFocus()"
       [disabled]="disabled"
       readonly>
-    <mat-datepicker-toggle matSuffix [for]="returnPicker"></mat-datepicker-toggle>
+    <mat-datepicker-toggle matSuffix [for]="returnPicker" disableRipple></mat-datepicker-toggle>
     <mat-datepicker
       #returnPicker
       [dateClass]="dateClass"
