@@ -56,8 +56,30 @@ class MultiSelectErrorStateMatcher implements ErrorStateMatcher {
 export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, DoCheck, ControlValueAccessor {
   @Input() label: string = 'Select options';
   @Input() placeholder: string = '';
-  @Input() options: AutocompleteOption[] = [];
-  @Input() groupedOptions: AutocompleteGroup[] = [];
+  @Input() set options(value: AutocompleteOption[]) {
+    this._options = value;
+    // When options change, re-match the current value with new options
+    if (this.searchControl) {
+      this.rematchValue();
+      this.setupFilteredOptions();
+    }
+  }
+  get options(): AutocompleteOption[] {
+    return this._options;
+  }
+  private _options: AutocompleteOption[] = [];
+  @Input() set groupedOptions(value: AutocompleteGroup[]) {
+    this._groupedOptions = value;
+    // When grouped options change, re-match the current value with new options
+    if (this.searchControl) {
+      this.rematchValue();
+      this.setupFilteredOptions();
+    }
+  }
+  get groupedOptions(): AutocompleteGroup[] {
+    return this._groupedOptions;
+  }
+  private _groupedOptions: AutocompleteGroup[] = [];
   @Input() multiple: boolean = true;
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;
@@ -98,6 +120,7 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, DoCh
   private errorTimeout: any = null;
   private blurTimeout: any = null;
   isInteractingWithPanel: boolean = false;
+  private currentValue: any = null;
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
@@ -343,24 +366,29 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, DoCh
 
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    if (value) {
-      if (this.multiple && Array.isArray(value)) {
+    this.currentValue = value;
+    this.rematchValue();
+  }
+
+  private rematchValue(): void {
+    if (this.currentValue) {
+      if (this.multiple && Array.isArray(this.currentValue)) {
         // Handle both array of objects and array of values
-        if (value.length > 0 && typeof value[0] === 'object' && value[0].hasOwnProperty('value')) {
+        if (this.currentValue.length > 0 && typeof this.currentValue[0] === 'object' && this.currentValue[0].hasOwnProperty('value')) {
           // Already an array of objects
-          this.selectedItems = value;
+          this.selectedItems = this.currentValue;
         } else {
           // Array of primitive values - map to options
-          this.selectedItems = this.findOptionsByValues(value);
+          this.selectedItems = this.findOptionsByValues(this.currentValue);
         }
       } else if (!this.multiple) {
         // Single select - handle both object and primitive value
-        if (typeof value === 'object' && value.hasOwnProperty('value')) {
+        if (typeof this.currentValue === 'object' && this.currentValue.hasOwnProperty('value')) {
           // Already an object
-          this.selectedItems = [value];
+          this.selectedItems = [this.currentValue];
         } else {
           // Primitive value - find the option
-          const option = this.findOptionByValue(value);
+          const option = this.findOptionByValue(this.currentValue);
           this.selectedItems = option ? [option] : [];
         }
       }
@@ -372,7 +400,9 @@ export class MultiSelectAutocompleteComponent implements OnInit, OnDestroy, DoCh
     this.checkMaxSelection();
 
     // Trigger filter update
-    this.searchControl.updateValueAndValidity();
+    if (this.searchControl) {
+      this.searchControl.updateValueAndValidity();
+    }
   }
 
   registerOnChange(fn: any): void {

@@ -45,7 +45,17 @@ class CustomErrorStateMatcher implements ErrorStateMatcher {
 export class AutocompleteInputComponent implements OnInit, OnDestroy, DoCheck, ControlValueAccessor {
   @Input() label: string = 'Select or type';
   @Input() placeholder: string = '';
-  @Input() options: AutocompleteInputOption[] = [];
+  @Input() set options(value: AutocompleteInputOption[]) {
+    this._options = value;
+    // When options change, re-setup filtered options
+    if (this.inputControl) {
+      this.setupFilteredOptions();
+    }
+  }
+  get options(): AutocompleteInputOption[] {
+    return this._options;
+  }
+  private _options: AutocompleteInputOption[] = [];
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;
   @Input() hint: string = '';

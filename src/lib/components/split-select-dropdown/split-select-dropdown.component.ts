@@ -25,7 +25,15 @@ export interface SplitSelectOption {
 })
 export class SplitSelectDropdownComponent implements ControlValueAccessor {
   @Input() label: string = 'Select option';
-  @Input() options: SplitSelectOption[] = [];
+  @Input() set options(value: SplitSelectOption[]) {
+    this._options = value;
+    // When options change, re-match the current value with new options
+    this.rematchValue();
+  }
+  get options(): SplitSelectOption[] {
+    return this._options;
+  }
+  private _options: SplitSelectOption[] = [];
   @Input() required: boolean = false;
   @Input() disabled: boolean = false;
   @Input() hint: string = '';
@@ -36,6 +44,7 @@ export class SplitSelectDropdownComponent implements ControlValueAccessor {
   @Input() showRequiredAsterisk: boolean = false;
 
   selectedValue: SplitSelectOption | null = null;
+  private currentValue: any = null;
 
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
@@ -74,13 +83,18 @@ export class SplitSelectDropdownComponent implements ControlValueAccessor {
 
   // ControlValueAccessor implementation
   writeValue(value: any): void {
-    if (value !== null && value !== undefined) {
+    this.currentValue = value;
+    this.rematchValue();
+  }
+
+  private rematchValue(): void {
+    if (this.currentValue !== null && this.currentValue !== undefined) {
       // If value is already an object, use it directly
-      if (typeof value === 'object' && value.hasOwnProperty('value')) {
-        this.selectedValue = value;
+      if (typeof this.currentValue === 'object' && this.currentValue.hasOwnProperty('value')) {
+        this.selectedValue = this.currentValue;
       } else {
         // Otherwise, find the option by value
-        this.selectedValue = this.options.find(opt => opt.value === value) || null;
+        this.selectedValue = this.options.find(opt => opt.value === this.currentValue) || null;
       }
     } else {
       // Look for a default option in the options array
